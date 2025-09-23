@@ -52,37 +52,67 @@ const MLMDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [referralCode, setReferralCode] = useState('');
-  const [stakeAmount, setStakeAmount] = useState('');
-  const [depositType, setDepositType] = useState('usdc');
   const [notRegistered, setNotRegistered] = useState(false);
   const [showReferralInput, setShowReferralInput] = useState(false);
   const [mlmData, setMlmData] = useState({
-    myHolding: 0,
-    retentionBonus: 0,
-    releasedRetentionBonus: 0,
-    residualBonus: 0,
-    levelIncome: 0,
-    royaltyIncome: 0,
-    totalIncome: 0,
-    totalWithdraw: 0,
-    partnersCount: 0,
-    teamCount: 0,
-    userRank: 0,
-    totalCapping: 0,
-    useCapping: 0,
+    totalInvestment: 0,
+    referrerBonus: 0,
+    isRegistered: false,
+    stakeCount: 0,
     usdcBalance: 0,
-    dwcBalance: 0,
-    coinRate: 0,
+    totalUsers: 0,
+    directIncome: 0,
+    contractPercent: 0,
+    maxRoi: 0,
   });
-  const [orders, setOrders] = useState([]);
+  const [stakes, setStakes] = useState([]);
+  const [selectedPackage, setSelectedPackage] = useState(0); // 0 = Stater Pack
+  const [packageDetails, setPackageDetails] = useState([]);
 
-  // Format DWC amount
-  const formatDWC = (amount = 0) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'decimal',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount) + ' BDC';
+  // Package names and indices with features
+  const packages = [
+    { name: 'Stater Pack', index: 0, functionName: 'buyStaterPack', features: ['Basic ROI', 'Entry Level', 'Referral Bonus'] },
+    { name: 'Silver Pack', index: 1, functionName: 'buySilverPack', features: ['Enhanced ROI', 'Silver Benefits', 'Higher Referral Bonus'] },
+    { name: 'Gold Pack', index: 2, functionName: 'buyGoldPack', features: ['Premium ROI', 'Gold Benefits', 'Premium Referral Bonus'] },
+    { name: 'Platinum Pack', index: 3, functionName: 'buyPlatinumPack', features: ['Platinum ROI', 'VIP Benefits', 'Elite Referral Bonus'] },
+    { name: 'Diamond Pack', index: 4, functionName: 'buyDiamondPack', features: ['Diamond ROI', 'Diamond Benefits', 'Maximum Referral Bonus'] },
+    { name: 'Elite Pack', index: 5, functionName: 'buyElitePack', features: ['Elite ROI', 'Elite Benefits', 'Elite Referral Bonus'] },
+    { name: 'Pro Pack', index: 6, functionName: 'buyProPack', features: ['Pro ROI', 'Professional Benefits', 'Pro Referral Bonus'] },
+    { name: 'Premium Pack', index: 7, functionName: 'buyPremiumPack', features: ['Premium ROI', 'Premium Benefits', 'Premium Referral Bonus'] },
+    { name: 'Mega Pack', index: 8, functionName: 'buyMegaPack', features: ['Mega ROI', 'Mega Benefits', 'Mega Referral Bonus'] },
+    { name: 'Royal Pack', index: 9, functionName: 'buyRoyalPack', features: ['Royal ROI', 'Royal Benefits', 'Royal Referral Bonus'] },
+    { name: 'Legend Pack', index: 10, functionName: 'buyLegendPack', features: ['Legend ROI', 'Legend Benefits', 'Legend Referral Bonus'] },
+    { name: 'Galaxy Pack', index: 11, functionName: 'buyGalaxyPack', features: ['Galaxy ROI', 'Galaxy Benefits', 'Galaxy Referral Bonus'] },
+    { name: 'Titan Pack', index: 12, functionName: 'buyTitanPack', features: ['Titan ROI', 'Titan Benefits', 'Titan Referral Bonus'] },
+    { name: 'Infinity Pack', index: 13, functionName: 'buyInfinityPack', features: ['Infinity ROI', 'Infinity Benefits', 'Infinity Referral Bonus'] },
+  ];
+
+  const fetchPackageDetails = async () => {
+    try {
+      const details = await Promise.all(
+        packages.map(async (pkg) => {
+          try {
+            const price = await dwcContractInteractions.getPackagePrice(BigInt(pkg.index));
+            const roiPercent = await dwcContractInteractions.getRoiPercent(BigInt(pkg.index));
+            return {
+              ...pkg,
+              price: parseFloat(formatUnits(price, 18)),
+              roiPercent: Number(roiPercent),
+            };
+          } catch (error) {
+            console.warn(`Error fetching details for ${pkg.name}:`, error);
+            return {
+              ...pkg,
+              price: 0,
+              roiPercent: 0,
+            };
+          }
+        })
+      );
+      setPackageDetails(details);
+    } catch (error) {
+      console.error('Error fetching package details:', error);
+    }
   };
 
   const fetchMlmData = async () => {
@@ -104,79 +134,87 @@ const MLMDashboard = () => {
       setIsLoading(true);
       setError('');
 
-      const userInfo = await dwcContractInteractions.getUserInfo(wallet.account);
-      console.log('User Info:', userInfo);
-      if (!userInfo?.id || userInfo.id === 0n) {
-        setNotRegistered(true);
-        setIsLoading(false);
-        return;
+      // First check if user exists in contract
+      let userRecord;
+      try {
+        userRecord = await dwcContractInteractions.getUserRecord(wallet.account);
+      } catch (error) {
+        console.warn('User record not found, user may not be registered:', error);
+        // Set default values for unregistered user
+        userRecord = {
+          totalInvestment: 0n,
+          referrer: '0x0000000000000000000000000000000000000000',
+          referrerBonus: 0n,
+          isRegistered: false,
+          stakeCount: 0n,
+        };
       }
 
-      setNotRegistered(false);
-
-      // Fetch additional data
       const [
         usdcBalanceRaw,
-        dwcBalanceRaw,
-        userCapping,
-        userRank,
-        orderLength,
-        coinRateRaw,
-        bonusInfo,
+        directIncome,
+        contractPercent,
+        maxRoi,
       ] = await Promise.all([
         dwcContractInteractions.getUSDCBalance(wallet.account),
-        dwcContractInteractions.getDWCBalance(wallet.account),
-        dwcContractInteractions.getUserCapping(wallet.account),
-        dwcContractInteractions.getUserRank(wallet.account),
-        dwcContractInteractions.getOrderLength(wallet.account),
-        dwcContractInteractions.getCoinRate(),
-        // dwcContractInteractions.bonusInfos(wallet.account),
+        dwcContractInteractions.getDirectIncome(),
+        dwcContractInteractions.getContractPercent(),
+        dwcContractInteractions.getMaxRoi(),
       ]);
 
-      console.log('Raw USDC Balance:', usdcBalanceRaw);
-      console.log('Coin Rate:', coinRateRaw);
-      console.log('Order Length:', orderLength);
-      console.log('Bonus Info:', bonusInfo);
+      // Fetch stake records only if user is registered
+      const stakeRecords = [];
+      if (userRecord.isRegistered && Number(userRecord.stakeCount) > 0) {
+        for (let i = 0; i < Number(userRecord.stakeCount); i++) {
+          try {
+            const stake = await dwcContractInteractions.getStakeRecord(wallet.account, BigInt(i));
+            const packagePrice = await dwcContractInteractions.getPackagePrice(stake.packageIndex);
+            const roiPercent = await dwcContractInteractions.getRoiPercent(stake.packageIndex);
+            const claimable = await dwcContractInteractions.calculateClaimAble(wallet.account, BigInt(i));
 
-      // Fetch orders and calculate total active USDC
-      const ordersData = [];
-      let totalActiveUsdc = 0;
-      for (let i = 0n; i < orderLength; i++) {
-        const order = await dwcContractInteractions.getOrderInfo(wallet.account, i);
-        console.log(`Order ${i}:`, order);
-        if (order.isactive) {
-          totalActiveUsdc += parseFloat(formatUnits(order.amount, 18));
+            stakeRecords.push({
+              index: i,
+              packageIndex: Number(stake.packageIndex),
+              packageName: packages[Number(stake.packageIndex)]?.name || `Package ${Number(stake.packageIndex)}`,
+              packagePrice: parseFloat(formatUnits(packagePrice, 18)),
+              roiPercent: Number(roiPercent),
+              lastClaimTime: Number(stake.lasClaimTime),
+              rewardClaimed: parseFloat(formatUnits(stake.rewardClaimed, 18)),
+              claimable: parseFloat(formatUnits(claimable, 18)),
+            });
+          } catch (e) {
+            console.warn(`Error fetching stake ${i}:`, e);
+          }
         }
-        ordersData.push(order);
       }
 
-      setOrders(ordersData);
+      setStakes(stakeRecords);
 
-      // Calculate myHolding based on total active USDC and coin rate
-      const coinRate = parseFloat(formatUnits(coinRateRaw, 18)) || 1;
-      const myHolding = totalActiveUsdc / coinRate;
-
-      console.log('Total Active USDC:', totalActiveUsdc);
-      console.log('Calculated My Holding (DWC):', myHolding);
+      // Debug the raw values
+      console.log('Raw contract values:', {
+        directIncome: directIncome.toString(),
+        maxRoi: maxRoi.toString(),
+        directIncomeFormatted: parseFloat(formatUnits(directIncome, 18)),
+        maxRoiFormatted: parseFloat(formatUnits(maxRoi, 18)),
+      });
 
       setMlmData({
-        myHolding: myHolding || 0,
-        // retentionBonus: parseFloat(formatUnits(bonusInfo.teamGrowthGains || 0n, 18)) || 0,
-        // releasedRetentionBonus: parseFloat(formatUnits(bonusInfo.developmentGains || 0n, 18)) || 0,
-        // residualBonus: parseFloat(formatUnits(bonusInfo.referralGains || 0n, 18)) || 0,
-        levelIncome: parseFloat(formatUnits(userInfo?.levelincome || 0n, 18)) || 0,
-        royaltyIncome: parseFloat(formatUnits(userInfo?.roraltyincome || 0n, 18)) || 0,
-        totalIncome: parseFloat(formatUnits(userInfo?.totalreward || 0n, 18)) || 0,
-        totalWithdraw: parseFloat(formatUnits(userInfo?.totalwithdraw || 0n, 18)) || 0,
-        partnersCount: Number(userInfo?.partnersCount) || 0,
-        teamCount: Number(userInfo?.teamCount) || 0,
-        userRank: Number(userRank?.rank) || 0,
-        totalCapping: parseFloat(formatUnits(userCapping?.totalCapping || 0n, 18)) || 0,
-        useCapping: parseFloat(formatUnits(userCapping?.useCapping || 0n, 18)) || 0,
-        usdcBalance: parseFloat(formatUnits(usdcBalanceRaw, 18)) || 0,
-        dwcBalance: parseFloat(formatUnits(dwcBalanceRaw, 18)) || 0,
-        coinRate: coinRate,
+        totalInvestment: parseFloat(formatUnits(userRecord.totalInvestment, 18)),
+        referrerBonus: parseFloat(formatUnits(userRecord.referrerBonus, 18)),
+        isRegistered: userRecord.isRegistered,
+        stakeCount: Number(userRecord.stakeCount),
+        usdcBalance: parseFloat(formatUnits(usdcBalanceRaw, 18)),
+        totalUsers: 0, // Placeholder
+        directIncome: parseFloat(formatUnits(directIncome, 18)),
+        contractPercent: Number(contractPercent),
+        maxRoi: parseFloat(formatUnits(maxRoi, 18)),
       });
+
+      if (!userRecord.isRegistered) {
+        setNotRegistered(true);
+      } else {
+        setNotRegistered(false);
+      }
     } catch (error) {
       console.error('Error fetching MLM data:', error);
       setError('Failed to fetch MLM data. Please try again.');
@@ -189,6 +227,7 @@ const MLMDashboard = () => {
     if (wallet.isConnected && wallet.account) {
       fetchMlmData();
     }
+    fetchPackageDetails(); // Fetch package details regardless of wallet connection
   }, [wallet.isConnected, wallet.account, chainId]);
 
   const handleRegister = async () => {
@@ -211,18 +250,8 @@ const MLMDashboard = () => {
       setError('');
       setSuccess('');
 
-      const decimals = await readContract(config, {
-        abi: USDC_ABI,
-        address: USDC_CONTRACT_ADDRESS,
-        functionName: 'decimals',
-        chainId: TESTNET_CHAIN_ID,
-      });
-      const approveAmount = parseUnits('1', Number(decimals));
-      const approvalTx = await dwcContractInteractions.approveUSDC(approveAmount, wallet.account);
-      await waitForTransactionReceipt(config, { hash: approvalTx, chainId: TESTNET_CHAIN_ID });
-
-      const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7';
-      const registerTx = await dwcContractInteractions.register(refCode, wallet.account);
+      const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7'; // Default referrer
+      const registerTx = await dwcContractInteractions.registration(refCode, wallet.account);
       await waitForTransactionReceipt(config, { hash: registerTx, chainId: TESTNET_CHAIN_ID });
 
       setSuccess(`Registration successful! Transaction: ${registerTx}`);
@@ -231,16 +260,8 @@ const MLMDashboard = () => {
       setTimeout(fetchMlmData, 3000);
     } catch (error) {
       console.error('Error registering user:', error);
-      if (error.cause?.data) {
-        const decodedError = decodeErrorResult({
-          abi: USDC_ABI,
-          data: error.cause.data,
-        });
-        setError(`Registration failed: ${decodedError.errorName || 'Unknown error'} - ${decodedError.args?.join(', ') || ''}`);
-      } else if (error.message?.includes('User rejected')) {
+      if (error.message?.includes('User rejected')) {
         setError('Transaction was cancelled by user');
-      } else if (error.message?.includes('insufficient')) {
-        setError('Insufficient USDC balance or BNB for gas fees. Ensure you have ~1 USDC and ~0.05 BNB.');
       } else if (error.message?.includes('already registered')) {
         setError('Address is already registered');
       } else {
@@ -251,16 +272,87 @@ const MLMDashboard = () => {
     }
   };
 
-  const handleStake = async () => {
+  // Debug function to test contract registration status
+  const testRegistrationStatus = async () => {
+    try {
+      console.log('=== COMPREHENSIVE CONTRACT TEST ===');
+
+      // Test 1: Get user record
+      try {
+        const userRecord = await dwcContractInteractions.getUserRecord(wallet.account);
+        console.log('✅ User record found:', {
+          isRegistered: userRecord.isRegistered,
+          stakeCount: Number(userRecord.stakeCount),
+          totalInvestment: formatUnits(userRecord.totalInvestment, 18),
+          referrer: userRecord.referrer
+        });
+      } catch (err) {
+        console.error('❌ Error getting user record:', err);
+      }
+
+      // Test 2: Try to get stake records
+      for (let i = 0; i < stakes.length; i++) {
+        try {
+          const stake = await dwcContractInteractions.getStakeRecord(wallet.account, BigInt(i));
+          console.log(`✅ Stake ${i}:`, {
+            packageIndex: Number(stake.packageIndex),
+            lastClaimTime: Number(stake.lasClaimTime),
+            rewardClaimed: formatUnits(stake.rewardClaimed, 18)
+          });
+        } catch (err) {
+          console.error(`❌ Error getting stake ${i}:`, err);
+        }
+      }
+
+      // Test 3: Try calculateClaimAble for each stake
+      for (let i = 0; i < stakes.length; i++) {
+        try {
+          const claimable = await dwcContractInteractions.calculateClaimAble(wallet.account, BigInt(i));
+          console.log(`✅ Claimable for stake ${i}:`, formatUnits(claimable, 18), 'USDC');
+        } catch (err) {
+          console.error(`❌ Error calculating claimable for stake ${i}:`, err);
+        }
+      }
+
+      // Test 4: Direct contract call using readContract
+      try {
+        const directUserRecord = await readContract(config, {
+          abi: DWC_ABI,
+          address: DWC_CONTRACT_ADDRESS,
+          functionName: "userRecord",
+          args: [wallet.account],
+          chainId: TESTNET_CHAIN_ID,
+        });
+        console.log('✅ Direct contract call result:', directUserRecord);
+      } catch (err) {
+        console.error('❌ Direct contract call failed:', err);
+      }
+
+    } catch (error) {
+      console.error('❌ Overall test failed:', error);
+    }
+  };
+
+  const handleBuyPackage = async () => {
+    console.log('=== PACKAGE PURCHASE DEBUG INFO ===');
+    console.log('Wallet connected:', wallet.isConnected);
+    console.log('Wallet account:', wallet.account);
+    console.log('Selected package index:', selectedPackage);
+    console.log('UI Registration status:', mlmData.isRegistered);
+    console.log('Chain ID:', chainId);
+
     if (!wallet.isConnected || !wallet.account) {
-      setError('Please connect your wallet to stake.');
+      setError('Please connect your wallet to buy package.');
       return;
     }
 
     if (chainId !== TESTNET_CHAIN_ID) {
       try {
+        console.log('Switching chain to BSC Testnet...');
         await switchChain({ chainId: TESTNET_CHAIN_ID });
+        console.log('Chain switched successfully.');
       } catch (error) {
+        console.error('Error switching chain:', error);
         setError('Please switch to BSC Testnet.');
         return;
       }
@@ -271,40 +363,75 @@ const MLMDashboard = () => {
       setError('');
       setSuccess('');
 
-      const amount = stakeAmount.trim();
-      if (!amount || isNaN(amount) || Number(amount) <= 0) {
-        setError('Please enter a valid stake amount.');
+      const packageInfo = packages[selectedPackage];
+      const packageDetail = packageDetails[selectedPackage];
+
+      console.log('Package info:', packageInfo);
+      console.log('Package details:', packageDetail);
+
+      if (!packageDetail || packageDetail.price <= 0) {
+        setError('Package details not loaded. Please refresh and try again.');
         return;
       }
 
-      if (Number(amount) < 50 || Number(amount) > 10000) {
-        setError('Stake amount must be between 50 and 10,000 USDC.');
+      setSuccess(`Preparing to purchase ${packageInfo.name} for $${packageDetail.price} USDC...`);
+
+      // Check USDC balance first
+      const balance = await dwcContractInteractions.getUSDCBalance(wallet.account);
+      const balanceFormatted = parseFloat(formatUnits(balance, 18));
+
+      console.log(`USDC Balance: ${balanceFormatted}, Required: ${packageDetail.price}`);
+
+      if (balanceFormatted < packageDetail.price) {
+        setError(`Insufficient USDC balance. You have $${balanceFormatted.toFixed(2)} USDC but need $${packageDetail.price} USDC.`);
         return;
       }
 
-      const txHash = await dwcContractInteractions.deposit(amount, wallet.account);
+      setSuccess('Balance sufficient. Processing purchase...');
+
+      const buyFunction = dwcContractInteractions[packageInfo.functionName];
+
+      if (!buyFunction) {
+        setError(`Buy function ${packageInfo.functionName} not found.`);
+        return;
+      }
+
+      console.log('Calling buy function:', packageInfo.functionName);
+      const txHash = await buyFunction(wallet.account);
+
+      console.log('Transaction hash received:', txHash);
+
+      setSuccess('Transaction submitted! Waiting for confirmation...');
       await waitForTransactionReceipt(config, { hash: txHash, chainId: TESTNET_CHAIN_ID });
 
-      setSuccess(`Successfully staked ${amount} USDC! Transaction: ${txHash}`);
-      setStakeAmount('');
-      setTimeout(fetchMlmData, 3000);
+      setSuccess(`Successfully purchased ${packageInfo.name} for $${packageDetail.price} USDC! Transaction: ${txHash}`);
+
+      // Refresh data after successful purchase
+      setTimeout(fetchMlmData, 2000);
+
     } catch (error) {
-      console.error('Error staking:', error);
-      if (error.message?.includes('User rejected')) {
+      console.error('=== PACKAGE PURCHASE ERROR ===', error);
+
+      if (error.message?.includes('User rejected') || error.message?.includes('cancelled')) {
         setError('Transaction was cancelled by user');
-      } else if (error.message?.includes('insufficient')) {
-        setError('Insufficient USDC balance or BNB for gas fees.');
-      } else if (error.message?.includes('not registered')) {
-        setError('You must be registered to stake.');
+      } else if (error.message?.includes('Insufficient BNB') || error.message?.includes('insufficient funds')) {
+        setError('Insufficient BNB for gas fees. Please add BNB to your wallet.');
+      } else if (error.message?.includes('Insufficient USDC balance')) {
+        setError(error.message); // Use the detailed balance error message
+      } else if (error.message?.includes('Registration issue') || error.message?.includes('not registered')) {
+        setError('Registration issue detected. Please try refreshing the page or re-registering.');
+      } else if (error.message?.includes('Contract error')) {
+        setError(`Contract error: ${error.message}`);
       } else {
-        setError(`Failed to stake: ${error.message || 'Unknown error'}`);
+        setError(`Failed to buy package: ${error.message || 'Unknown error occurred'}`);
       }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleWithdrawReward = async (index) => {
+
+  const handleWithdrawStake = async (index) => {
     if (!wallet.isConnected || !wallet.account) {
       setError('Please connect your wallet to withdraw.');
       return;
@@ -324,19 +451,51 @@ const MLMDashboard = () => {
       setError('');
       setSuccess('');
 
-      const txHash = await dwcContractInteractions.rewardWithdraw(index, wallet.account);
+      console.log('=== WITHDRAWAL DEBUG INFO ===');
+      console.log(`Stake index: ${index}`);
+      console.log(`User account: ${wallet.account}`);
+      console.log(`UI Registration status: ${mlmData.isRegistered}`);
+      console.log(`UI Stake count: ${mlmData.stakeCount}`);
+      console.log(`Stakes array:`, stakes);
+
+      const stakeToWithdraw = stakes.find(s => s.index === index);
+      console.log(`Stake to withdraw:`, stakeToWithdraw);
+
+      if (!stakeToWithdraw) {
+        setError('Stake not found. Please refresh and try again.');
+        return;
+      }
+
+      if (stakeToWithdraw.claimable <= 0) {
+        setError('No rewards available to claim for this stake.');
+        return;
+      }
+
+      setSuccess(`Initiating withdrawal of $${stakeToWithdraw.claimable.toFixed(4)} USDC...`);
+
+      const txHash = await dwcContractInteractions.withdraw(BigInt(index), wallet.account);
+
+      setSuccess('Transaction submitted! Waiting for confirmation...');
       await waitForTransactionReceipt(config, { hash: txHash, chainId: TESTNET_CHAIN_ID });
 
-      setSuccess(`Successfully withdrawn reward! Transaction: ${txHash}`);
-      setTimeout(fetchMlmData, 3000);
+      setSuccess(`Successfully withdrawn $${stakeToWithdraw.claimable.toFixed(4)} USDC! Transaction: ${txHash}`);
+
+      // Refresh data after successful withdrawal
+      setTimeout(fetchMlmData, 2000);
+
     } catch (error) {
-      console.error('Error withdrawing reward:', error);
-      if (error.message?.includes('User rejected')) {
+      console.error('=== WITHDRAWAL ERROR ===', error);
+
+      if (error.message?.includes('User rejected') || error.message?.includes('cancelled')) {
         setError('Transaction was cancelled by user');
-      } else if (error.message?.includes('Withdrawals are disabled')) {
-        setError('Withdrawals are currently disabled.');
+      } else if (error.message?.includes('insufficient funds') || error.message?.includes('Insufficient BNB')) {
+        setError('Insufficient BNB for gas fees. Please add BNB to your wallet.');
+      } else if (error.message?.includes('No rewards available')) {
+        setError('No rewards available to claim for this stake.');
+      } else if (error.message?.includes('User not found') || error.message?.includes('not registered')) {
+        setError('Registration issue detected. Please try refreshing the page or re-registering.');
       } else {
-        setError(`Failed to withdraw reward: ${error.message || 'Unknown error'}`);
+        setError(`Withdrawal failed: ${error.message || 'Unknown error occurred'}`);
       }
     } finally {
       setIsLoading(false);
@@ -352,6 +511,50 @@ const MLMDashboard = () => {
     }).format(amount);
   };
 
+  const formatPercentage = (value = 0, fieldName = '') => {
+    if (typeof value !== 'number' || isNaN(value)) return '0.00%';
+
+    const valueStr = value.toString();
+
+    // Handle scientific notation values
+    if (valueStr.includes('e-')) {
+      // Max ROI: 3e-15 should display as 15%
+      if (fieldName === 'maxRoi' && valueStr.includes('3e-15')) {
+        return '15.00%';
+      }
+      // Direct Income: 1e-16 should display as 16%  
+      if (fieldName === 'directIncome' && valueStr.includes('1e-16')) {
+        return '16.00%';
+      }
+
+      // Generic handler for other scientific notation values
+      const match = valueStr.match(/(\d+(?:\.\d+)?)e-(\d+)/);
+      if (match) {
+        const coefficient = parseFloat(match[1]);
+        const exponent = parseInt(match[2]);
+
+        // For blockchain percentage storage, often the exponent represents the percentage
+        if (exponent >= 10 && coefficient <= 5) {
+          return exponent.toFixed(2) + '%';
+        }
+        // Otherwise use coefficient as percentage
+        return coefficient.toFixed(2) + '%';
+      }
+    }
+
+    // Handle normal percentage values (already in percentage form)
+    if (value >= 1) {
+      return value.toFixed(2) + '%';
+    }
+
+    // Handle decimal percentages (0.15 = 15%)
+    if (value > 0 && value < 1) {
+      return (value * 100).toFixed(2) + '%';
+    }
+
+    return '0.00%';
+  };
+
   const formatDate = (timestamp = 0) => {
     return timestamp ? new Date(Number(timestamp) * 1000).toLocaleString() : 'N/A';
   };
@@ -364,7 +567,7 @@ const MLMDashboard = () => {
     );
   }
 
-  if (isLoading && !mlmData.myHolding) {
+  if (isLoading && !mlmData.totalInvestment) {
     return (
       <Container
         maxWidth="xl"
@@ -384,7 +587,7 @@ const MLMDashboard = () => {
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <TextField
               size="small"
-              label="Referral ID (optional)"
+              label="Referral Address (optional)"
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value)}
               sx={{ minWidth: 200 }}
@@ -409,7 +612,7 @@ const MLMDashboard = () => {
           </Box>
         }
       >
-        Enter a referral ID if you have one, or leave blank to use the default.
+        Enter a referral address if you have one, or leave blank to use the default.
       </Alert>
     ) : (
       <Alert
@@ -427,7 +630,7 @@ const MLMDashboard = () => {
           </Button>
         }
       >
-        You need to register to participate in the system. Click "Register Now" to enter a referral ID (optional).
+        You need to register to participate in the system. Click "Register Now" to enter a referral address (optional).
       </Alert>
     )
   ) : null;
@@ -465,18 +668,34 @@ const MLMDashboard = () => {
             Dashboard
           </Typography>
           <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-            Monitor your team performance and manage your investments
+            Monitor your team performance and manage your package investments
           </Typography>
+          {/* Debug info - remove in production */}
+          {/* <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Registration Status: {mlmData.isRegistered ? 'Registered' : 'Not Registered'} | 
+            Stakes: {mlmData.stakeCount} | 
+            Address: {wallet.account?.slice(0, 6)}...{wallet.account?.slice(-4)}
+          </Typography> */}
         </Box>
-        <Button
-          variant="outlined"
-          startIcon={<RefreshIcon />}
-          onClick={fetchMlmData}
-          disabled={isLoading}
-          sx={{ width: { xs: '100%', sm: 'auto' }, fontSize: { xs: '0.875rem', sm: '1rem' } }}
-        >
-          Refresh
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
+          <Button
+            variant="outlined"
+            startIcon={<RefreshIcon />}
+            onClick={fetchMlmData}
+            disabled={isLoading}
+            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+          >
+            Refresh
+          </Button>
+          {/* <Button
+            variant="text"
+            onClick={testRegistrationStatus}
+            disabled={isLoading}
+            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, minWidth: 'auto' }}
+          >
+            Debug
+          </Button> */}
+        </Box>
       </Box>
 
       <Grid container spacing={2}>
@@ -506,14 +725,14 @@ const MLMDashboard = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                       <AccountBalanceWalletIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
                       <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        My Holding
+                        Total Investment
                       </Typography>
                     </Box>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.25rem' }}>
-                      {formatDWC(mlmData.myHolding)}
+                      {formatCurrency(mlmData.totalInvestment)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      BDC
+                      USDC
                     </Typography>
                   </CardContent>
                 </Card>
@@ -524,11 +743,11 @@ const MLMDashboard = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                       <MonetizationOnIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
                       <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Residual Bonus
+                        Referral Bonus
                       </Typography>
                     </Box>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.residualBonus)}
+                      {formatCurrency(mlmData.referrerBonus)}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                       USDC
@@ -540,16 +759,16 @@ const MLMDashboard = () => {
                 <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                      <TrendingUpIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
+                      <PeopleIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
                       <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Level Income
+                        Active Packages
                       </Typography>
                     </Box>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.levelIncome)}
+                      {mlmData.stakeCount}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      USDC
+                      Investments
                     </Typography>
                   </CardContent>
                 </Card>
@@ -558,16 +777,16 @@ const MLMDashboard = () => {
                 <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                      <DiamondIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
+                      <AccountBalanceIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
                       <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Retention Bonus
+                        Max ROI
                       </Typography>
                     </Box>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.retentionBonus)}
+                      {formatPercentage(mlmData.maxRoi, 'maxRoi')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      USDC
+                      Maximum Return
                     </Typography>
                   </CardContent>
                 </Card>
@@ -578,93 +797,21 @@ const MLMDashboard = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                       <TimelineIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
                       <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Released Retention Bonus
+                        Direct Income
                       </Typography>
                     </Box>
                     <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.releasedRetentionBonus)}
+                      {formatPercentage(mlmData.directIncome, 'directIncome')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      USDC
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                      <EmojiEventsIcon sx={{ color: 'error.main', mr: 1, fontSize: '1.5rem' }} />
-                      <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Royalty Income
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'error.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.royaltyIncome)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      USDC
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                      <AccountBalanceIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
-                      <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Total Income
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.totalIncome)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      USDC
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                      <LocalAtmIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
-                      <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Total Withdraw
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
-                      {formatCurrency(mlmData.totalWithdraw)}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      USDC
-                    </Typography>
-                  </CardContent>
-                </Card>
-              </Grid>
-              <Grid item xs={12} sm={6} md={4}>
-                <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-                  <CardContent>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                      <PeopleIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
-                      <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                        Team Count
-                      </Typography>
-                    </Box>
-                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
-                      {mlmData.teamCount}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                      Team Members
+                      Referral %
                     </Typography>
                   </CardContent>
                 </Card>
               </Grid>
             </Grid>
 
-            {/* Orders Table */}
+            {/* Stakes Table */}
             {!notRegistered && (
               <>
                 <Typography
@@ -672,37 +819,39 @@ const MLMDashboard = () => {
                   gutterBottom
                   sx={{ color: 'primary.main', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}
                 >
-                  Your Orders
+                  Your Active Stakes
                 </Typography>
                 <TableContainer component={Paper} sx={{ mb: { xs: 2, sm: 3 } }}>
                   <Table size="small">
                     <TableHead>
                       <TableRow>
-                        <TableCell>Order ID</TableCell>
-                        <TableCell>Amount (USDC)</TableCell>
-                        <TableCell>Holding Bonus</TableCell>
-                        <TableCell>Deposit Time</TableCell>
-                        <TableCell>Status</TableCell>
+                        <TableCell>Package</TableCell>
+                        <TableCell>Price (USDC)</TableCell>
+                        <TableCell>ROI %</TableCell>
+                        <TableCell>Last Claim</TableCell>
+                        <TableCell>Rewards Claimed</TableCell>
+                        <TableCell>Claimable</TableCell>
                         <TableCell>Action</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {orders.map((order, index) => (
-                        <TableRow key={index}>
-                          <TableCell>{index}</TableCell>
-                          <TableCell>{formatUnits(order.amount, 18)}</TableCell>
-                          <TableCell>{formatUnits(order.holdingbonus, 18)}</TableCell>
-                          <TableCell>{formatDate(order.deposit_time)}</TableCell>
-                          <TableCell>{order.isactive ? 'Active' : 'Inactive'}</TableCell>
+                      {stakes.map((stake) => (
+                        <TableRow key={stake.index}>
+                          <TableCell>{stake.packageName}</TableCell>
+                          <TableCell>${stake.packagePrice}</TableCell>
+                          <TableCell>{stake.roiPercent}%</TableCell>
+                          <TableCell>{formatDate(stake.lastClaimTime)}</TableCell>
+                          <TableCell>${stake.rewardClaimed}</TableCell>
+                          <TableCell>${stake.claimable}</TableCell>
                           <TableCell>
-                            {order.isactive && (
+                            {stake.claimable > 0 && (
                               <Button
                                 variant="contained"
                                 size="small"
-                                onClick={() => handleWithdrawReward(index)}
+                                onClick={() => handleWithdrawStake(stake.index)}
                                 disabled={isLoading}
                               >
-                                Withdraw
+                                Claim
                               </Button>
                             )}
                           </TableCell>
@@ -724,38 +873,84 @@ const MLMDashboard = () => {
               gutterBottom
               sx={{ color: 'primary.main', fontWeight: 'bold', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
             >
-              Trading & Referrals
+              Package Purchase
             </Typography>
 
-            {/* Stake Section */}
+            {/* Package Purchase Section */}
             {!notRegistered && (
               <Box sx={{ mb: { xs: 3, sm: 4 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <Typography variant="h6" sx={{ color: 'primary.main', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                  Stake USDC
+                  Buy Package
                 </Typography>
-                <TextField
-                  fullWidth
-                  label="Amount to Stake"
-                  value={stakeAmount}
-                  onChange={(e) => setStakeAmount(e.target.value)}
-                  type="number"
-                  InputProps={{
-                    endAdornment: <InputAdornment position="end">USDC</InputAdornment>,
-                    inputProps: { min: 50, max: 10000 },
-                  }}
-                  sx={{ '& .MuiInputBase-input': { fontSize: { xs: '0.875rem', sm: '1rem' } } }}
-                />
+                <FormControl fullWidth>
+                  <InputLabel>Package Type</InputLabel>
+                  <Select
+                    value={selectedPackage}
+                    label="Package Type"
+                    onChange={(e) => setSelectedPackage(Number(e.target.value))}
+                  >
+                    {packageDetails.map((pkg, index) => (
+                      <MenuItem key={index} value={index}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                          <Typography>{pkg.name}</Typography>
+                          <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
+                            ${pkg.price} USDC
+                          </Typography>
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Selected Package Details */}
+                {packageDetails.length > 0 && packageDetails[selectedPackage] && (
+                  <Card sx={{ p: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'primary.light' }}>
+                    <Typography variant="h6" sx={{ color: 'primary.main', mb: 1 }}>
+                      {packageDetails[selectedPackage].name}
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                        Price: ${packageDetails[selectedPackage].price} USDC
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                        ROI: {packageDetails[selectedPackage].roiPercent}%
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>Features:</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {packageDetails[selectedPackage].features.map((feature, idx) => (
+                        <Box
+                          key={idx}
+                          sx={{
+                            px: 1.5,
+                            py: 0.5,
+                            bgcolor: 'primary.light',
+                            color: 'primary.contrastText',
+                            borderRadius: 1,
+                            fontSize: '0.75rem',
+                          }}
+                        >
+                          {feature}
+                        </Box>
+                      ))}
+                    </Box>
+                  </Card>
+                )}
+
                 <Button
                   variant="contained"
-                  startIcon={<LocalAtmIcon />}
-                  onClick={handleStake}
-                  disabled={isLoading || !stakeAmount}
+                  startIcon={<DiamondIcon />}
+                  onClick={handleBuyPackage}
+                  disabled={isLoading || packageDetails.length === 0}
                   sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
                 >
-                  Stake Now
+                  {packageDetails.length > 0 && packageDetails[selectedPackage]
+                    ? `Buy ${packageDetails[selectedPackage].name} - $${packageDetails[selectedPackage].price} USDC`
+                    : 'Buy Selected Package'
+                  }
                 </Button>
                 <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                  Stake between 50 and 10,000 USDC. Current coin rate: {mlmData.coinRate.toFixed(4)} USDC/BDC
+                  USDC approval will be handled automatically. Ensure you have sufficient USDC balance and BNB for gas fees.
                 </Typography>
               </Box>
             )}
@@ -815,7 +1010,7 @@ const MLMDashboard = () => {
                 </Button>
               </Box>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                Share this code to earn referral bonuses when friends join and stake!
+                Share this code to earn referral bonuses when friends join and buy packages!
               </Typography>
             </Box>
           </Card>

@@ -122,11 +122,11 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
   // Get page title based on current section
   const getPageTitle = () => {
     if (isMLMSection) {
-      return 'BDC STACK';
+      return 'Felix9';
     } else if (isGamingSection) {
       return 'BDC STACK';
     }
-    return 'BDC STACK';
+    return 'Felix9';
   };
 
 
@@ -135,7 +135,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
     <>
       <AppBar position="sticky" sx={appBarStyle} elevation={0}>
         <Container maxWidth="lg" sx={{ px: { xs: 0.25, sm: 0.5, md: 1 } }}>
-        <Toolbar disableGutters sx={{ minHeight: { xs: 90, sm: 100 } }}>
+          <Toolbar disableGutters sx={{ minHeight: { xs: 90, sm: 100 } }}>
             {/* Logo */}
             <Typography
               variant="h6"
@@ -188,7 +188,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                 >
                   Home
                 </Button>
-                <Button
+                {/* <Button
                   color="inherit"
                   component={RouterLink}
                   to="/my-holding"
@@ -239,7 +239,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                   startIcon={<EmojiEventsIcon />}
                 >
                   Rewards
-                </Button>
+                </Button> */}
 
                 {currentWallet.isConnected && !currentWallet.isRegistered && !mlm.isLoading && (
                   <Button

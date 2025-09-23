@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { useAccount, useDisconnect, useSwitchChain } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Address } from 'viem';
-import { dwcContractInteractions } from '../services/contractService';
+import { dwcContractInteractions, TESTNET_CHAIN_ID } from '../services/contractService';
 
 interface WalletContextType {
   account: string | null;
@@ -42,8 +42,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  // BSC Testnet chain id is 97
-  const isCorrectNetwork = chain?.id === 97;
+  const isCorrectNetwork = chain?.id === TESTNET_CHAIN_ID;
 
   const connectWallet = async () => {
     try {
@@ -66,13 +65,11 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     try {
       console.log('Disconnecting wallet...');
       disconnect();
-      close(); // Close Web3Modal
+      close();
       setIsRegistered(false);
       setLoading(false);
-      // Clear any cached data
       localStorage.removeItem('wagmi.store');
       localStorage.removeItem('wagmi.cache');
-      // Force a small delay to ensure state updates
       setTimeout(() => {
         console.log('Wallet disconnected successfully');
       }, 100);
@@ -84,7 +81,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const switchToCorrectNetwork = async (): Promise<boolean> => {
     if (!isCorrectNetwork && switchChainAsync) {
       try {
-        await switchChainAsync({ chainId: 97 });
+        await switchChainAsync({ chainId: TESTNET_CHAIN_ID });
         return true;
       } catch (error) {
         console.error('Error switching network:', error);
@@ -95,12 +92,16 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   };
 
   const refreshRegistrationStatus = async (): Promise<boolean> => {
-    if (!address) return false;
+    if (!address || !isCorrectNetwork) {
+      setIsRegistered(false);
+      return false;
+    }
+
     setLoading(true);
     try {
-      const registered = await dwcContractInteractions.isUserExists(address as Address);
-      setIsRegistered(registered);
-      return registered;
+      const userRecord = await dwcContractInteractions.getUserRecord(address as Address);
+      setIsRegistered(userRecord.isRegistered);
+      return userRecord.isRegistered;
     } catch (error) {
       console.error('Error refreshing registration status:', error);
       setIsRegistered(false);
@@ -110,14 +111,13 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
     }
   };
 
-  // Auto-check registration status when wallet connects
   useEffect(() => {
-    if (isConnected && address) {
+    if (isConnected && address && isCorrectNetwork) {
       refreshRegistrationStatus();
     } else {
       setIsRegistered(false);
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, isCorrectNetwork]);
 
   return (
     <WalletContext.Provider

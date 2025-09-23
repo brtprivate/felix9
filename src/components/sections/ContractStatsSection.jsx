@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import { useWallet } from '../../context/WalletContext';
 import { useChainId, useSwitchChain } from 'wagmi';
-import { formatUnits, decodeErrorResult } from 'viem';
+import { formatUnits } from 'viem';
 import { useBalance } from 'wagmi';
 import { TESTNET_CHAIN_ID, dwcContractInteractions, USDC_ABI } from '../../services/contractService';
 
@@ -22,9 +22,9 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import LinkIcon from '@mui/icons-material/Link';
 import PersonIcon from '@mui/icons-material/Person';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
-import PeopleIcon from '@mui/icons-material/People';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PoolIcon from '@mui/icons-material/Pool';
+import PeopleIcon  from "@mui/icons-material/People"
 const ContractStatsSection = () => {
   const wallet = useWallet();
   const chainId = useChainId();
@@ -35,15 +35,15 @@ const ContractStatsSection = () => {
     bnbBalance: 0,
     usdcBalance: 0,
     dwcBalance: 0,
-    communityFundDWC: 0,
-    communityFundUSDC: 0,
-    referralAddress: '',
-    referrerAddress: '',
-    totalSupply: 0,
-    burnedTokens: 0,
-    lastUserId: 0,
+    totalInvestment: 0,
+    stakeCount: 0,
+    totalUsers: 0,
     userRank: 0,
-    liquidityPoolFund: 0,
+    maxRoi: 0,
+    contractPercent: 0,
+    directIncome: 0,
+    ownerAddress: '',
+    coinRate: 0,
   });
 
   // Fetch BNB balance
@@ -73,56 +73,46 @@ const ContractStatsSection = () => {
 
       const [
         usdcBalanceRaw,
-        dwcBalanceRaw,
-        communityHoldingFund,
-        userInfo,
-        userRank,
-        totalSupply,
-        burnedTokens,
-        lastUserId,
+        userRecord,
+        contractPercent,
+        directIncome,
+        maxRoi,
+        ownerAddress,
       ] = await Promise.all([
         dwcContractInteractions.getUSDCBalance(wallet.account),
-        dwcContractInteractions.getDWCBalance(wallet.account),
-        dwcContractInteractions.getCommunityHoldingFund(),
-        dwcContractInteractions.getUserInfo(wallet.account),
-        dwcContractInteractions.getUserRank(wallet.account),
-        dwcContractInteractions.getTotalSupply(),
-        dwcContractInteractions.getBurnedTokens(),
-        dwcContractInteractions.getLastUserId(),
+        dwcContractInteractions.getUserRecord(wallet.account),
+        dwcContractInteractions.getContractPercent(),
+        dwcContractInteractions.getDirectIncome(),
+        dwcContractInteractions.getMaxRoi(),
+        dwcContractInteractions.getOwner(),
       ]);
 
-      const [communityDWCBalance, communityUSDCBalance] = await Promise.all([
-        dwcContractInteractions.getDWCBalance(communityHoldingFund),
-        dwcContractInteractions.getUSDCBalance(communityHoldingFund),
-      ]);
-
-      const liquidityPool = await dwcContractInteractions.getLiquidityPool();
+      // Get total users count (approximate by checking uniqueUsers length)
+      let totalUsers = 0;
+      try {
+        // This is a simple approximation - in a real implementation, you'd track this differently
+        totalUsers = 0; // Placeholder - would need to implement proper counting
+      } catch (e) {
+        console.warn('Could not fetch total users:', e);
+      }
 
       setStatsData({
         bnbBalance: bnbBalance ? parseFloat(formatUnits(bnbBalance.value, 18)) : 0,
-        usdcBalance: parseFloat(formatUnits(usdcBalanceRaw, 18)),
-        dwcBalance: parseFloat(formatUnits(dwcBalanceRaw, 18)),
-        communityFundDWC: parseFloat(formatUnits(communityDWCBalance, 18)),
-        communityFundUSDC: parseFloat(formatUnits(communityUSDCBalance, 18)),
-        referralAddress: wallet.account,
-        referrerAddress: userInfo.referrer,
-        totalSupply: parseFloat(formatUnits(totalSupply, 18)),
-        burnedTokens: parseFloat(formatUnits(burnedTokens, 18)),
-        lastUserId: Number(lastUserId),
-        userRank: Number(userRank.rank),
-        liquidityPoolFund: parseFloat(formatUnits(liquidityPool.tokenAmount, 18)),
+        usdcBalance: parseFloat(formatUnits(usdcBalanceRaw, 18)), // This USDC contract uses 18 decimals
+        dwcBalance: 0, // No DWC token in new contract
+        totalInvestment: parseFloat(formatUnits(userRecord.totalInvestment, 18)),
+        stakeCount: Number(userRecord.stakeCount),
+        totalUsers: totalUsers,
+        userRank: 0, // No rank system in new contract
+        maxRoi: parseFloat(formatUnits(maxRoi, 18)),
+        contractPercent: Number(contractPercent),
+        directIncome: parseFloat(formatUnits(directIncome, 18)),
+        ownerAddress: ownerAddress,
+        coinRate: 0, // No coin rate in new contract
       });
     } catch (error) {
       console.error('Error fetching stats data:', error);
-      let errorMessage = 'Failed to fetch contract stats. Please try again.';
-      if (error.cause?.data) {
-        const decodedError = decodeErrorResult({
-          abi: USDC_ABI,
-          data: error.cause.data,
-        });
-        errorMessage = `Error: ${decodedError.errorName || 'Unknown error'} - ${decodedError.args?.join(', ') || ''}`;
-      }
-      setError(errorMessage);
+      setError('Failed to fetch contract stats. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -134,17 +124,13 @@ const ContractStatsSection = () => {
     }
   }, [wallet.isConnected, wallet.account, chainId]);
 
-  const formatCurrency = (amount = 0) => {
+  const formatCurrency = (amount = 0, decimals = 6) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(amount);
-  };
-
-  const formatDWC = (amount = 0) => {
-    return (Math.floor(amount * 10000) / 10000).toFixed(4);
   };
 
   const formatAddress = (address) => {
@@ -210,7 +196,7 @@ const ContractStatsSection = () => {
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1.25rem' }}>
-                {formatCurrency(statsData.usdcBalance)}
+                {formatCurrency(statsData.usdcBalance, 6)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -225,49 +211,11 @@ const ContractStatsSection = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                 <TrendingUpIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
                 <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  BDC Balance
+                  Total Investment
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
-                {formatDWC(statsData.dwcBalance)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                BDC
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <BarChartIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Community Fund BDC
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
-                {formatDWC(statsData.communityFundDWC)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                BDC
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <BarChartIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Community Fund USDC
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
-                {formatCurrency(statsData.communityFundUSDC)}
+                {formatCurrency(statsData.totalInvestment, 6)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -280,17 +228,17 @@ const ContractStatsSection = () => {
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <LinkIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
+                <PeopleIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
                 <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Referral Address
+                  Active Packages
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1rem' }}>
-                {formatAddress(statsData.referralAddress)}
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
+                {statsData.stakeCount}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                Your Wallet
-              </Typography>
+                  Stakes
+                </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -299,56 +247,16 @@ const ContractStatsSection = () => {
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <PersonIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
+                <BarChartIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
                 <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                Sponsor Address
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1rem' }}>
-                {formatAddress(statsData.referrerAddress)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                Referred By
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-      
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <BarChartIcon sx={{ color: 'error.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Burned Tokens
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'error.main', fontSize: '1.25rem' }}>
-                {formatDWC(statsData.burnedTokens)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                BDC
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <EmojiEventsIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Your Rank
+                  Contract %
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
-                {statsData.userRank}
+                {statsData.contractPercent}%
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                Rank Status
+                Contract Fee
               </Typography>
             </CardContent>
           </Card>
@@ -358,16 +266,35 @@ const ContractStatsSection = () => {
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <CheckCircleIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
+                <LinkIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
                 <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Contract Status
+                  Owner Address
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1rem' }}>
+                {formatAddress(statsData.ownerAddress)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Contract Owner
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <EmojiEventsIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Max ROI
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
-                Active
+                {statsData.maxRoi}%
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                Status
+                Maximum Return
               </Typography>
             </CardContent>
           </Card>
@@ -377,39 +304,39 @@ const ContractStatsSection = () => {
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <PoolIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
+                <CheckCircleIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
                 <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Liquidity Pool Fund
+                  Direct Income
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.25rem' }}>
-                {formatDWC(statsData.liquidityPoolFund)}
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+                {statsData.directIncome}%
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                BDC
+                Referral Bonus
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        {/* <Grid item xs={12} sm={6} md={4}>
+        <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <PeopleIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
+                <PeopleIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
                 <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
                   Total Users
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.25rem' }}>
-                {statsData.lastUserId}
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
+                {statsData.totalUsers}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 Registered Users
               </Typography>
             </CardContent>
           </Card>
-        </Grid> */}
+        </Grid>
       </Grid>
     </Card>
   );
