@@ -392,7 +392,7 @@ const formatPercentage = (rawValue: bigint, divider: bigint): string => {
   }
 };
 
-// Helper function for package purchase
+// Helper function for package purchase with mandatory approval
 async function buyPackage(
   functionName: string,
   packageIndex: bigint,
@@ -404,9 +404,10 @@ async function buyPackage(
 
   while (attempt <= maxRetries) {
     try {
-      console.log(`Purchasing ${functionName} for ${account}, attempt ${attempt}`);
+      console.log(`=== PACKAGE PURCHASE: ${functionName} ===`);
+      console.log(`Account: ${account}, Attempt: ${attempt}`);
       
-      // Get package price and check balance
+      // Step 1: Get package price and check balance
       const packagePrice = await context.getPackagePrice(packageIndex);
       const balance = await context.getUSDCBalance(account);
       
@@ -417,8 +418,8 @@ async function buyPackage(
         throw new Error(`Insufficient USDC balance. Available: ${formatUnits(balance, 18)} USDC, Required: ${formatUnits(packagePrice, 18)} USDC`);
       }
 
-      // Check and handle USDC allowance
-      const allowance = await readContract(config, {
+      // Step 2: ALWAYS check current allowance and request approval if needed
+      const currentAllowance = await readContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "allowance",
@@ -426,17 +427,58 @@ async function buyPackage(
         chainId: TESTNET_CHAIN_ID,
       }) as bigint;
 
-      console.log(`Current allowance: ${formatUnits(allowance, 18)} USDC`);
+      console.log(`Current allowance: ${formatUnits(currentAllowance, 18)} USDC`);
+      console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDC`);
 
-      if (allowance < packagePrice) {
-        console.log(`Approving ${formatUnits(packagePrice, 18)} USDC for DWC contract`);
-        const approvalTx = await usdcContractInteractions.approveUSDC(DWC_CONTRACT_ADDRESS, packagePrice, account);
-        await waitForTransactionReceipt(config, { hash: approvalTx, chainId: TESTNET_CHAIN_ID });
-        console.log('USDC approval completed');
+      // Step 3: Request approval if insufficient allowance
+      if (currentAllowance < packagePrice) {
+        console.log(`🔐 REQUESTING USDC APPROVAL: ${formatUnits(packagePrice, 18)} USDC`);
+        console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
+        
+        try {
+          const approvalTx = await usdcContractInteractions.approveUSDC(DWC_CONTRACT_ADDRESS, packagePrice, account);
+          console.log(`Approval transaction submitted: ${approvalTx}`);
+          
+          // Wait for approval confirmation
+          const approvalReceipt = await waitForTransactionReceipt(config, { 
+            hash: approvalTx, 
+            chainId: TESTNET_CHAIN_ID 
+          });
+          
+          if (approvalReceipt.status === 'reverted') {
+            throw new Error('USDC approval transaction failed');
+          }
+          
+          console.log('✅ USDC approval confirmed');
+          
+          // Verify the approval was successful
+          const newAllowance = await readContract(config, {
+            abi: USDC_ABI,
+            address: USDC_CONTRACT_ADDRESS,
+            functionName: "allowance",
+            args: [account, DWC_CONTRACT_ADDRESS],
+            chainId: TESTNET_CHAIN_ID,
+          }) as bigint;
+          
+          console.log(`New allowance after approval: ${formatUnits(newAllowance, 18)} USDC`);
+          
+          if (newAllowance < packagePrice) {
+            throw new Error('Approval verification failed - insufficient allowance after approval');
+          }
+          
+        } catch (approvalError: any) {
+          console.error('Approval failed:', approvalError);
+          if (approvalError.message?.includes('User rejected') || approvalError.message?.includes('cancelled')) {
+            throw new Error('USDC approval was cancelled by user. Package purchase cannot proceed without approval.');
+          }
+          throw new Error(`USDC approval failed: ${approvalError.message || 'Unknown approval error'}`);
+        }
+      } else {
+        console.log('✅ Sufficient allowance already exists');
       }
 
-      // Execute the buy function directly without pre-checks
-      console.log(`Executing ${functionName} directly...`);
+      // Step 4: Execute the package purchase
+      console.log(`🛒 EXECUTING PACKAGE PURCHASE: ${functionName}`);
       
       const txHash = await writeContract(config, {
         abi: DWC_ABI,
@@ -445,26 +487,27 @@ async function buyPackage(
         args: [],
         chain: bscTestnet,
         account,
-        maxFeePerGas: parseUnits('10', 9), // Increased gas price
-        maxPriorityFeePerGas: parseUnits('5', 9), // Increased priority fee
+        maxFeePerGas: parseUnits('10', 9),
+        maxPriorityFeePerGas: parseUnits('5', 9),
       });
 
-      console.log(`Transaction submitted: ${txHash}`);
+      console.log(`Package purchase transaction submitted: ${txHash}`);
 
+      // Step 5: Wait for purchase confirmation
       const receipt = await waitForTransactionReceipt(config, { 
         hash: txHash as `0x${string}`, 
         chainId: TESTNET_CHAIN_ID 
       });
 
       if (receipt.status === 'reverted') {
-        throw new Error('Transaction reverted by the contract.');
+        throw new Error('Package purchase transaction reverted by the contract.');
       }
 
-      console.log(`Package purchase successful: ${txHash}`);
+      console.log(`✅ PACKAGE PURCHASE SUCCESSFUL: ${txHash}`);
       return txHash as `0x${string}`;
 
     } catch (error: any) {
-      console.error(`Purchase attempt ${attempt} failed:`, error);
+      console.error(`❌ Purchase attempt ${attempt} failed:`, error);
 
       // Handle specific errors
       if (error.message?.includes('User rejected') || error.message?.includes('cancelled')) {
@@ -477,6 +520,10 @@ async function buyPackage(
 
       if (error.message?.includes('Insufficient USDC balance')) {
         throw error; // Re-throw balance errors immediately
+      }
+
+      if (error.message?.includes('approval')) {
+        throw error; // Re-throw approval errors immediately
       }
 
       // Handle contract errors

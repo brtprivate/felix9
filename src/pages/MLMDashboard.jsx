@@ -759,6 +759,24 @@ const MLMDashboard = () => {
                 <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
                   <CardContent>
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                      <LocalAtmIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
+                      <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                        USDC Balance
+                      </Typography>
+                    </Box>
+                    <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+                      {formatCurrency(mlmData.usdcBalance)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                      Available USDC
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={6} md={4}>
+                <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+                  <CardContent>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                       <PeopleIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
                       <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
                         Active Packages
