@@ -15,6 +15,7 @@ import {
   Box,
   CircularProgress,
   Tooltip,
+  LinearProgress,
 } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
@@ -38,12 +39,16 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
     }
   };
 
-  const { totalClaimed, totalClaimable, totalRewards } = useMemo(() => {
+  const { totalClaimed, totalClaimable, totalRewards, earningLimit, used, remaining, percentage } = useMemo(() => {
     const totalClaimed = stakes.reduce((sum, stake) => sum + stake.rewardClaimed, 0);
     const totalClaimable = stakes.reduce((sum, stake) => sum + stake.claimable, 0);
     const totalRewards = totalClaimed + totalClaimable;
-    return { totalClaimed, totalClaimable, totalRewards };
-  }, [stakes]);
+    const earningLimit = mlmData.totalInvestment * 3;
+    const used = totalClaimed + totalClaimable;
+    const remaining = Math.max(0, earningLimit - used);
+    const percentage = earningLimit > 0 ? Math.min(100, (used / earningLimit) * 100) : 0;
+    return { totalClaimed, totalClaimable, totalRewards, earningLimit, used, remaining, percentage };
+  }, [stakes, mlmData.totalInvestment]);
 
   return (
     <Card sx={{ p: { xs: 2, sm: 3 }, boxShadow: 3 }}>
@@ -171,6 +176,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
             </CardContent>
           </Card>
         </Grid>
+
       </Grid>
 
       {!notRegistered && (
@@ -205,7 +211,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                     <TableRow key={stake.index}>
                       <TableCell>{stake.packageName || 'Unknown'}</TableCell>
                       <TableCell>{formatCurrency(stake.packagePrice)}</TableCell>
-                      <TableCell>{stake.roiPercent}%</TableCell>
+                      <TableCell>{(stake.roiPercent)/10}%</TableCell>
                       <TableCell>{formatDate(stake.lastClaimTime)}</TableCell>
                       <TableCell>{formatCurrency(stake.rewardClaimed)}</TableCell>
                       <TableCell>{formatCurrency(stake.claimable)}</TableCell>
@@ -239,6 +245,54 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
             </TableContainer>
           )}
         </>
+      )}
+
+      {!notRegistered && (
+        <Card sx={{ p: 2, boxShadow: 2, mt: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+              <MonetizationOnIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
+              <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                Earning Limit
+              </Typography>
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+              {formatCurrency(earningLimit)}
+            </Typography>
+            <Box sx={{ mb: 2 }}>
+              <LinearProgress
+                variant="determinate"
+                value={percentage}
+                sx={{
+                  height: 10,
+                  borderRadius: 5,
+                  backgroundColor: 'grey.200',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: percentage > 80 ? 'warning.main' : 'success.main',
+                  }
+                }}
+              />
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.8rem' }}>
+                {percentage.toFixed(2)}% Used
+              </Typography>
+            </Box>
+            <Grid container spacing={1}>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.85rem' }}>
+                  Used: {formatCurrency(used)}
+                </Typography>
+              </Grid>
+              <Grid item xs={6}>
+                <Typography variant="body2" color="success.main" sx={{ fontSize: '0.85rem' }}>
+                  Remaining: {formatCurrency(remaining)}
+                </Typography>
+              </Grid>
+            </Grid>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mt: 1 }}>
+              USDC
+            </Typography>
+          </CardContent>
+        </Card>
       )}
     </Card>
   );
