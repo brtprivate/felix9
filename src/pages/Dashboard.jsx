@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Container,
@@ -77,10 +76,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleWithdrawStake = async (index, onComplete) => {
+  const handleWithdrawStake = async (index) => {
     if (!wallet.isConnected || !wallet.account) {
       setError('Please connect your wallet to withdraw.');
-      onComplete?.();
       return;
     }
 
@@ -89,7 +87,6 @@ const Dashboard = () => {
         await switchChain({ chainId: TESTNET_CHAIN_ID });
       } catch (error) {
         setError('Please switch to BSC Testnet.');
-        onComplete?.();
         return;
       }
     }
@@ -111,13 +108,11 @@ const Dashboard = () => {
 
       if (!stakeToWithdraw) {
         setError('Stake not found. Please refresh and try again.');
-        onComplete?.();
         return;
       }
 
       if (stakeToWithdraw.claimable <= 0) {
         setError('No rewards available to claim for this stake.');
-        onComplete?.();
         return;
       }
 
@@ -147,7 +142,6 @@ const Dashboard = () => {
       }
     } finally {
       setIsLoading(false);
-      onComplete?.();
     }
   };
 
@@ -299,8 +293,6 @@ const Dashboard = () => {
             chainId={chainId}
             switchChain={switchChain}
             fetchMlmData={fetchMlmData}
-            stakes={stakes}
-            handleWithdrawStake={handleWithdrawStake}
           />
           <ReferralSection wallet={wallet} setSuccess={setSuccess} />
         </Grid>

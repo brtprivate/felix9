@@ -245,7 +245,7 @@ export const USDC_ABI = [
     "stateMutability": "view",
     "type": "function"
   },
- 
+
 
   {
     "inputs": [],
@@ -353,7 +353,7 @@ export const usdcContractInteractions = {
   async approveUSDC(spender: Address, amount: bigint, account: Address): Promise<string> {
     try {
       console.log(`Approving ${amount} USDC for ${spender}`);
-      
+
       const txHash = await writeContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
@@ -362,7 +362,7 @@ export const usdcContractInteractions = {
         chain: bscTestnet,
         account: account,
       });
-      
+
       console.log('USDC approval transaction hash:', txHash);
       return txHash;
     } catch (error: any) {
@@ -401,7 +401,7 @@ export const usdcContractInteractions = {
   async transferUSDC(to: Address, amount: bigint, account: Address): Promise<string> {
     try {
       console.log(`Transferring ${amount} USDC to ${to}`);
-      
+
       const txHash = await writeContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
@@ -410,7 +410,7 @@ export const usdcContractInteractions = {
         chain: bscTestnet,
         account: account,
       });
-      
+
       console.log('USDC transfer transaction hash:', txHash);
       return txHash;
     } catch (error: any) {
@@ -430,7 +430,7 @@ export const usdcContractInteractions = {
   async transferFromUSDC(from: Address, to: Address, amount: bigint, account: Address): Promise<string> {
     try {
       console.log(`Transferring ${amount} USDC from ${from} to ${to}`);
-      
+
       const txHash = await writeContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
@@ -439,7 +439,7 @@ export const usdcContractInteractions = {
         chain: bscTestnet,
         account: account,
       });
-      
+
       console.log('USDC transferFrom transaction hash:', txHash);
       return txHash;
     } catch (error: any) {

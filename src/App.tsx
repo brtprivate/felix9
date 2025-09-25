@@ -1,57 +1,62 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
-import { WagmiProvider } from 'wagmi';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
+import { CssBaseline, ThemeProvider, createTheme } from "@mui/material";
+import { WagmiProvider } from "wagmi";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 // Styles
-import './styles/web3modal-override.css';
-import './utils/web3modal-customizer';
+import "./styles/web3modal-override.css";
+import "./utils/web3modal-customizer";
 
 // Config & Context
-import { config } from './config/web3modal';
-import { WalletProvider } from './context/WalletContext';
-import { MLMProvider } from './context/MLMContext';
-import { ToastProvider } from './components/common/ToastNotification';
+import { config } from "./config/web3modal";
+import { WalletProvider } from "./context/WalletContext";
+import { MLMProvider } from "./context/MLMContext";
+import { ToastProvider } from "./components/common/ToastNotification";
 
 // Components & Pages
-import Navbar from './components/Navbar';
-import MLMDashboard from './pages/MLMDashboard';
-import MyHolding from './pages/MyHolding';
-import MyTeam from './pages/MyTeam';
-import SwapPage from './pages/SwapPage';
-import RewardsPage from './pages/RewardsPage';
-
+import Navbar from "./components/Navbar";
+import MLMDashboard from "./pages/MLMDashboard";
+import MyHolding from "./pages/MyHolding";
+import MyTeam from "./pages/MyTeam";
+import SwapPage from "./pages/SwapPage";
+import RewardsPage from "./pages/RewardsPage";
+import Dashboard from "./pages/Dashboard";
 
 // Theme configuration
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#6200ea',
-      light: '#9d46ff',
-      dark: '#0a00b6',
-      contrastText: '#ffffff',
+      main: "#6200ea",
+      light: "#9d46ff",
+      dark: "#0a00b6",
+      contrastText: "#ffffff",
     },
     secondary: {
-      main: '#00bcd4',
-      light: '#62efff',
-      dark: '#008ba3',
-      contrastText: '#000000',
+      main: "#00bcd4",
+      light: "#62efff",
+      dark: "#008ba3",
+      contrastText: "#000000",
     },
     background: {
-      default: '#f5f5f5',
-      paper: '#ffffff',
+      default: "#f5f5f5",
+      paper: "#ffffff",
     },
-    error: { main: '#f44336' },
-    warning: { main: '#ff9800' },
-    info: { main: '#2196f3' },
-    success: { main: '#4caf50' },
+    error: { main: "#f44336" },
+    warning: { main: "#ff9800" },
+    info: { main: "#2196f3" },
+    success: { main: "#4caf50" },
   },
   typography: {
     fontFamily: '"Poppins", "Roboto", "Helvetica", "Arial", sans-serif',
     h1: { fontWeight: 700 },
     h2: { fontWeight: 600 },
     h3: { fontWeight: 600 },
-    button: { fontWeight: 600, textTransform: 'none' },
+    button: { fontWeight: 600, textTransform: "none" },
   },
   shape: { borderRadius: 12 },
   components: {
@@ -59,22 +64,22 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 30,
-          padding: '10px 24px',
-          boxShadow: '0 4px 10px rgba(0, 0, 0, 0.15)',
+          padding: "10px 24px",
+          boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
         },
         containedPrimary: {
-          '&:hover': { boxShadow: '0 6px 15px rgba(98, 0, 234, 0.3)' },
+          "&:hover": { boxShadow: "0 6px 15px rgba(98, 0, 234, 0.3)" },
         },
         containedSecondary: {
-          '&:hover': { boxShadow: '0 6px 15px rgba(0, 188, 212, 0.3)' },
+          "&:hover": { boxShadow: "0 6px 15px rgba(0, 188, 212, 0.3)" },
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         rounded: { borderRadius: 16 },
-        elevation1: { boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)' },
-        elevation3: { boxShadow: '0 8px 30px rgba(0, 0, 0, 0.1)' },
+        elevation1: { boxShadow: "0 4px 20px rgba(0, 0, 0, 0.05)" },
+        elevation3: { boxShadow: "0 8px 30px rgba(0, 0, 0, 0.1)" },
       },
     },
   },
@@ -95,7 +100,8 @@ function App() {
                 <Router>
                   <Navbar />
                   <Routes>
-                    <Route path="/" element={<MLMDashboard />} />
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/dashboard" element={<MLMDashboard />} />
                     <Route path="/my-holding" element={<MyHolding />} />
                     <Route path="/my-team" element={<MyTeam />} />
                     <Route path="/swap" element={<SwapPage />} />

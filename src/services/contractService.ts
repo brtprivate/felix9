@@ -436,7 +436,18 @@ async function buyPackage(
         console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
         
         try {
-          const approvalTx = await usdcContractInteractions.approveUSDC(DWC_CONTRACT_ADDRESS, packagePrice, account);
+          // Use a higher approval amount to avoid frequent re-approvals
+          const approvalAmount = packagePrice * 2n; // Approve 2x the package price
+          
+          const approvalTx = await writeContract(config, {
+            abi: USDC_ABI,
+            address: USDC_CONTRACT_ADDRESS,
+            functionName: 'approve',
+            args: [DWC_CONTRACT_ADDRESS, approvalAmount],
+            chain: bscTestnet,
+            account: account,
+          });
+          
           console.log(`Approval transaction submitted: ${approvalTx}`);
           
           // Wait for approval confirmation
@@ -566,13 +577,47 @@ async approveUSDC(amount: bigint, account: Address): Promise<`0x${string}`> {
   console.log('=== approveUSDC called ===');
   console.log('Approving amount:', formatUnits(amount, 18), 'for account:', account);
 
-  const maxRetries = 1;
+  const maxRetries = 2;
   let attempt = 1;
 
   while (attempt <= maxRetries) {
     try {
       console.log(`Attempt ${attempt}: Sending approve transaction...`);
 
+      // Check current allowance first
+      const currentAllowance = await readContract(config, {
+        abi: USDC_ABI,
+        address: USDC_CONTRACT_ADDRESS,
+        functionName: "allowance",
+        args: [account, DWC_CONTRACT_ADDRESS],
+        chainId: TESTNET_CHAIN_ID,
+      }) as bigint;
+
+      console.log(`Current allowance: ${formatUnits(currentAllowance, 18)} USDC`);
+
+      // If allowance is already sufficient, return success
+      if (currentAllowance >= amount) {
+        console.log('✅ Sufficient allowance already exists');
+        return '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`;
+      }
+
+      // Reset allowance to 0 first if there's existing allowance (some tokens require this)
+      if (currentAllowance > 0n) {
+        console.log('Resetting allowance to 0 first...');
+        const resetTx = await writeContract(config, {
+          abi: USDC_ABI,
+          address: USDC_CONTRACT_ADDRESS,
+          functionName: "approve",
+          args: [DWC_CONTRACT_ADDRESS, 0n],
+          chain: bscTestnet,
+          account,
+        });
+        
+        await waitForTransactionReceipt(config, { hash: resetTx as `0x${string}`, chainId: TESTNET_CHAIN_ID });
+        console.log('Allowance reset to 0');
+      }
+
+      // Now set the new allowance
       const txHash = await writeContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
@@ -589,6 +634,21 @@ async approveUSDC(amount: bigint, account: Address): Promise<`0x${string}`> {
 
       if (receipt.status === 'reverted') {
         throw new Error('USDC approval transaction reverted.');
+      }
+
+      // Verify the approval
+      const newAllowance = await readContract(config, {
+        abi: USDC_ABI,
+        address: USDC_CONTRACT_ADDRESS,
+        functionName: "allowance",
+        args: [account, DWC_CONTRACT_ADDRESS],
+        chainId: TESTNET_CHAIN_ID,
+      }) as bigint;
+
+      console.log(`New allowance: ${formatUnits(newAllowance, 18)} USDC`);
+
+      if (newAllowance < amount) {
+        throw new Error('Approval verification failed');
       }
 
       return txHash as `0x${string}`;
