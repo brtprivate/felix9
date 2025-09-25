@@ -22,7 +22,7 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
     {
       name: "Starter Pack",
       index: 1,
-      functionName: "buyStarterPack",
+      functionName: "buyStaterPack",
       features: ["Basic ROI", "Entry Level", "Referral Bonus"],
     },
     {

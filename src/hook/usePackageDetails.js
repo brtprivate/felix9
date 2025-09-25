@@ -6,7 +6,7 @@ const usePackageDetails = () => {
   const [packageDetails, setPackageDetails] = useState([]);
 
   const packages = [
-    { name: 'Starter Pack', index: 1, functionName: 'buyStarterPack', price: 100, roiPercent: 1, features: ['Basic ROI', 'Entry Level', 'Referral Bonus'] },
+    { name: 'Starter Pack', index: 1, functionName: 'buyStaterPack', price: 100, roiPercent: 1, features: ['Basic ROI', 'Entry Level', 'Referral Bonus'] },
     { name: 'Silver Pack', index: 2, functionName: 'buySilverPack', price: 200, roiPercent: 1, features: ['Enhanced ROI', 'Silver Benefits', 'Higher Referral Bonus'] },
     { name: 'Gold Pack', index: 3, functionName: 'buyGoldPack', price: 300, roiPercent: 1, features: ['Premium ROI', 'Gold Benefits', 'Premium Referral Bonus'] },
     { name: 'Platinum Pack', index: 4, functionName: 'buyPlatinumPack', price: 400, roiPercent: 1, features: ['Platinum ROI', 'VIP Benefits', 'Elite Referral Bonus'] },
