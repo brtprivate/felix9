@@ -355,6 +355,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                               onClick={() => handleClaimClick(stake.index)}
                               disabled={loadingStakes[stake.index] || stake.claimable <= 0}
                               startIcon={loadingStakes[stake.index] ? <CircularProgress size={16} /> : null}
+                              color=''
                             >
                               {loadingStakes[stake.index] ? 'Claiming...' : 'Claim'}
                             </Button>

@@ -31,6 +31,8 @@ import DiamondIcon from '@mui/icons-material/Diamond';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import { getOwner } from '../services/contractService';
 
 interface NavbarProps {
   selectedSection?: string;
@@ -48,6 +50,8 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const location = useLocation();
+
+  const [isOwner, setIsOwner] = React.useState(false);
 
   // Force user existence check when wallet connects and is on correct network
   React.useEffect(() => {
@@ -75,6 +79,24 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
       return () => clearTimeout(timer);
     }
   }, [wallet.isConnected, wallet.account, wallet.isCorrectNetwork]);
+
+  // Check if current account is owner
+  React.useEffect(() => {
+    const checkOwner = async () => {
+      if (wallet.account) {
+        try {
+          const owner = await getOwner();
+          setIsOwner(owner.toLowerCase() === wallet.account.toLowerCase());
+        } catch (error) {
+          console.error('Error checking owner:', error);
+          setIsOwner(false);
+        }
+      } else {
+        setIsOwner(false);
+      }
+    };
+    checkOwner();
+  }, [wallet.account]);
 
   // Manual refresh function
   const handleManualRefresh = async () => {
@@ -114,9 +136,9 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
   // Gradient background for AppBar - different for MLM and Gaming
   const appBarStyle = {
     background: isMLMSection
-      ? 'linear-gradient(90deg, #FFA000 0%, #FF8F00 100%)'
-      : 'linear-gradient(90deg, #6200ea 0%, #3f51b5 100%)',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+      ? 'linear-gradient(90deg, #130d02ff 0%, #313030ff 100%)'
+      : 'linear-gradient(90deg, #040305ff 0%, #02030eff 100%)',
+    boxShadow: '0 4px 20px rgba(3, 3, 3, 0.15)',
   };
 
   // Get page title based on current section
@@ -163,7 +185,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
               </Box>
               {isMobile && (
                 <Box component="span" sx={{ ml: 0.2, fontSize: '0.8rem' }}>
-                  BDC
+                  Felix9
                 </Box>
               )}
             </Typography>
@@ -241,6 +263,21 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                   Rewards
                 </Button> */}
 
+                {isOwner && (
+                  <Button
+                    color="inherit"
+                    component={RouterLink}
+                    to="/admin"
+                    sx={{
+                      borderRadius: '20px',
+                      px: 2,
+                      backgroundColor: isActive('/admin') ? 'rgba(255, 255, 255, 0.15)' : 'transparent'
+                    }}
+                    startIcon={<AdminPanelSettingsIcon />}
+                  >
+                    Admin
+                  </Button>
+                )}
                 {currentWallet.isConnected && !currentWallet.isRegistered && !mlm.isLoading && (
                   <Button
                     color="inherit"

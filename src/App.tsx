@@ -26,14 +26,15 @@ import MyTeam from "./pages/MyTeam";
 import SwapPage from "./pages/SwapPage";
 import RewardsPage from "./pages/RewardsPage";
 import Dashboard from "./pages/Dashboard";
+import Admin from "./pages/Admin";
 
 // Theme configuration
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#6200ea",
-      light: "#9d46ff",
-      dark: "#0a00b6",
+      main: "#0a0214ffff",
+      light: "#eae7edff",
+      dark: "#ebecf0ff",
       contrastText: "#ffffff",
     },
     secondary: {
@@ -68,7 +69,7 @@ const theme = createTheme({
           boxShadow: "0 4px 10px rgba(0, 0, 0, 0.15)",
         },
         containedPrimary: {
-          "&:hover": { boxShadow: "0 6px 15px rgba(98, 0, 234, 0.3)" },
+          "&:hover": { boxShadow: "0 6px 15px rgba(212, 209, 216, 0.3)" },
         },
         containedSecondary: {
           "&:hover": { boxShadow: "0 6px 15px rgba(0, 188, 212, 0.3)" },
@@ -102,10 +103,8 @@ function App() {
                   <Routes>
                     <Route path="/" element={<Dashboard />} />
                     <Route path="/dashboard" element={<MLMDashboard />} />
-                    <Route path="/my-holding" element={<MyHolding />} />
-                    <Route path="/my-team" element={<MyTeam />} />
-                    <Route path="/swap" element={<SwapPage />} />
-                    <Route path="/rewards" element={<RewardsPage />} />
+                    
+                    <Route path="/admin" element={<Admin />} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

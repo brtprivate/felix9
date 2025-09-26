@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { formatUnits } from 'viem';
-import { dwcContractInteractions } from '../services/contractService';
+import { dwcContractInteractions, getRoiPercent } from '../services/contractService';
 
 const usePackageDetails = () => {
   const [packageDetails, setPackageDetails] = useState([]);
@@ -22,11 +21,25 @@ const usePackageDetails = () => {
     { name: 'Legend Pack', index: 14, functionName: 'buyLegendPack', price: 5000, roiPercent: 1.2, features: ['Legend ROI', 'Legend Benefits', 'Legend Referral Bonus'] },
   ];
 
-  const fetchPackageDetails = () => {
-    setPackageDetails(packages);
-  };
-
   useEffect(() => {
+    const fetchPackageDetails = async () => {
+      try {
+        const percents = [];
+        for (let i = 1; i <= 14; i++) {
+          const percent = await getRoiPercent(BigInt(i));
+          percents[i] = percent.toString();
+        }
+        const updatedPackages = packages.map(pkg => ({
+          ...pkg,
+          roiPercent: Number(percents[pkg.index]) / 10 || pkg.roiPercent,
+        }));
+        setPackageDetails(updatedPackages);
+      } catch (error) {
+        console.error('Error fetching ROI percents:', error);
+        setPackageDetails(packages);
+      }
+    };
+
     fetchPackageDetails();
   }, []);
 

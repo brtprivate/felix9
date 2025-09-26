@@ -1,11 +1,18 @@
-# TODO: Add Earning Limit Section
+# Admin Page Implementation
 
 ## Tasks
-- [x] Add LinearProgress import to PerformanceOverview.jsx
-- [x] Compute earningLimit, used, remaining, percentage in useMemo
-- [x] Add new Grid item with Earning Limit card including progress bar
-- [x] Test the UI with sample data
+- [x] Create src/pages/Admin.tsx with owner check and UI for owner functions
+- [x] Update src/App.tsx to add /admin route
+- [x] Add Admin link to Navbar for owner accounts
+- [ ] Test the admin page functionality
 
-## Completed
-- [x] Analyze task and gather information
-- [x] Create plan and get user approval
+## Details
+- Admin page should check if connected account is owner
+- Display current contract values (owner, direct income, ROI percents, balance)
+- Provide forms for:
+  - Add Liquidity (amount input)
+  - Change Direct Income (percentage input)
+  - Transfer Ownership (address input)
+  - Update ROI Percent (package index select + percent input)
+- Use MUI components for consistent styling
+- Handle loading states and errors

@@ -1088,7 +1088,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       const gasEstimate = await estimateGas(config, {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
-        functionName: "changeDirectIncome",
+        functionName: "changeDirectPercentage",
         args: [directIncome],
         chain: bscTestnet,
         account,
@@ -1098,7 +1098,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       const txHash = await writeContract(config, {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
-        functionName: "changeDirectIncome",
+        functionName: "changeDirectPercentage",
         args: [directIncome],
         chain: bscTestnet,
         account,
@@ -1238,7 +1238,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "updateRoiPercent",
         args: [index, newPercent],
-        chain: DISABLED,
+        chain: bscTestnet,
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),

@@ -169,7 +169,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
                       px: 1.5,
                       py: 0.5,
                       bgcolor: 'primary.light',
-                      color: 'primary.contrastText',
+                      color: '',
                       borderRadius: 1,
                       fontSize: '0.75rem',
                     }}
@@ -185,6 +185,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
             variant="contained"
             startIcon={<DiamondIcon />}
             onClick={handleBuyPackage}
+            color=''
             disabled={isLoading || packageDetails.length === 0}
             sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
           >
