@@ -23,32 +23,59 @@ import PeopleIcon from '@mui/icons-material/People';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import StarsIcon from '@mui/icons-material/Stars';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import BusinessCenterIcon from '@mui/icons-material/BusinessCenter';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import IconButton from '@mui/material/IconButton';
 import { formatCurrency, formatDate } from '../utils/utils';
 
-const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawStake, isLoading }) => {
+// Utility function to format ROI
+const formatROI = (roiPercent) => {
+  if (typeof roiPercent !== 'number') return 'N/A';
+  return `${(roiPercent / 10).toFixed(1)}%`;
+};
+
+const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleWithdrawStake, isLoading }) => {
   const [loadingStakes, setLoadingStakes] = useState({}); // Track loading state per stake index
+  const [error, setError] = useState(null); // Track errors for user feedback
+  console.log("mlm", mlmData);
 
   const handleClaimClick = async (stakeIndex) => {
     setLoadingStakes((prev) => ({ ...prev, [stakeIndex]: true }));
+    setError(null); // Clear previous errors
     try {
-      await handleWithdrawStake(stakeIndex, () =>
-        setLoadingStakes((prev) => ({ ...prev, [stakeIndex]: false }))
-      );
+      await handleWithdrawStake(stakeIndex);
     } catch (error) {
       console.error('Claim error:', error);
+      setError('Failed to claim rewards. Please try again.');
+    } finally {
+      setLoadingStakes((prev) => ({ ...prev, [stakeIndex]: false }));
     }
   };
 
-  const { totalClaimed, totalClaimable, totalRewards, earningLimit, used, remaining, percentage } = useMemo(() => {
-    const totalClaimed = stakes.reduce((sum, stake) => sum + stake.rewardClaimed, 0);
-    const totalClaimable = stakes.reduce((sum, stake) => sum + stake.claimable, 0);
+  // Split useMemo for better readability and performance
+  const financialMetrics = useMemo(() => {
+    const totalClaimed = stakes.reduce((sum, stake) => sum + (stake.rewardClaimed || 0), 0);
+    const totalClaimable = stakes.reduce((sum, stake) => sum + (stake.claimable || 0), 0);
     const totalRewards = totalClaimed + totalClaimable;
-    const earningLimit = mlmData.totalInvestment * 3;
+    const earningLimit = (mlmData.totalInvestment || 0) * 3;
     const used = totalClaimed + totalClaimable;
     const remaining = Math.max(0, earningLimit - used);
     const percentage = earningLimit > 0 ? Math.min(100, (used / earningLimit) * 100) : 0;
+
     return { totalClaimed, totalClaimable, totalRewards, earningLimit, used, remaining, percentage };
   }, [stakes, mlmData.totalInvestment]);
+
+  if (isLoading) {
+    return (
+      <Card sx={{ p: { xs: 2, sm: 3 }, boxShadow: 3, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography variant="body1" sx={{ mt: 2 }}>
+          Loading performance data...
+        </Typography>
+      </Card>
+    );
+  }
 
   return (
     <Card sx={{ p: { xs: 2, sm: 3 }, boxShadow: 3 }}>
@@ -59,6 +86,12 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
       >
         Performance Overview
       </Typography>
+
+      {error && (
+        <Typography variant="body2" color="error.main" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
 
       <Typography
         variant="h6"
@@ -78,7 +111,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.25rem' }}>
-                {formatCurrency(mlmData.totalInvestment)}
+                {formatCurrency(mlmData.totalInvestment || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -96,7 +129,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
-                {formatCurrency(mlmData.referrerBonus)}
+                {formatCurrency(mlmData.referrerBonus || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -114,7 +147,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1.25rem' }}>
-                {mlmData.stakeCount}
+                {mlmData.stakeCount || 0}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 Investments
@@ -132,7 +165,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
-                {formatCurrency(totalClaimed)}
+                {formatCurrency(financialMetrics.totalClaimed)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -150,7 +183,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
-                {formatCurrency(totalClaimable)}
+                {formatCurrency(financialMetrics.totalClaimable)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -168,7 +201,7 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'error.main', fontSize: '1.25rem' }}>
-                {formatCurrency(totalRewards)}
+                {formatCurrency(financialMetrics.totalRewards)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
                 USDC
@@ -176,7 +209,96 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
             </CardContent>
           </Card>
         </Grid>
-
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <AccountBalanceWalletIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Contract Balance
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1.25rem' }}>
+                {formatCurrency(mlmData.contractBalance || 0)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                USDC
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <PeopleIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Total Users
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+                {mlmData.totalUsers || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Registered
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <BusinessCenterIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Direct Business
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+                {formatCurrency(mlmData.directBusiness || 0)}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                USDC
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <AccountBalanceWalletIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Referrer
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+                {mlmData.referrer && mlmData.referrer !== '0x0000000000000000000000000000000000000000' ? `${mlmData.referrer.slice(0, 6)}...${mlmData.referrer.slice(-4)}` : 'None'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Address
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <CheckCircleIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Contract Status
+                </Typography>
+              </Box>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
+                Active
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                Operational
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
       </Grid>
 
       {!notRegistered && (
@@ -194,36 +316,37 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
             </Typography>
           ) : (
             <TableContainer component={Paper} sx={{ mb: { xs: 2, sm: 3 } }}>
-              <Table size="small">
+              <Table size="small" aria-label="Active stakes table">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Package</TableCell>
-                    <TableCell>Price (USDC)</TableCell>
-                    <TableCell>ROI %</TableCell>
-                    <TableCell>Last Claim</TableCell>
-                    <TableCell>Rewards Claimed</TableCell>
-                    <TableCell>Claimable</TableCell>
-                    <TableCell>Action</TableCell>
+                    <TableCell scope="col">Package</TableCell>
+                    <TableCell scope="col">Price (USDC)</TableCell>
+                    <TableCell scope="col">ROI %</TableCell>
+                    <TableCell scope="col">Last Claim</TableCell>
+                    <TableCell scope="col">Rewards Claimed</TableCell>
+                    <TableCell scope="col">Claimable</TableCell>
+                    <TableCell scope="col">Action</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {stakes.map((stake) => (
                     <TableRow key={stake.index}>
                       <TableCell>{stake.packageName || 'Unknown'}</TableCell>
-                      <TableCell>{formatCurrency(stake.packagePrice)}</TableCell>
-                      <TableCell>{(stake.roiPercent)/10}%</TableCell>
+                      <TableCell>{formatCurrency(stake.packagePrice || 0)}</TableCell>
+                      <TableCell>{formatROI(stake.roiPercent)}</TableCell>
                       <TableCell>{formatDate(stake.lastClaimTime)}</TableCell>
-                      <TableCell>{formatCurrency(stake.rewardClaimed)}</TableCell>
-                      <TableCell>{formatCurrency(stake.claimable)}</TableCell>
+                      <TableCell>{formatCurrency(stake.rewardClaimed || 0)}</TableCell>
+                      <TableCell>{formatCurrency(stake.claimable || 0)}</TableCell>
                       <TableCell>
                         <Tooltip
                           title={
                             stake.claimable <= 0
                               ? 'No rewards available to claim'
                               : loadingStakes[stake.index]
-                              ? 'Processing claim...'
-                              : 'Claim available rewards'
+                                ? 'Processing claim...'
+                                : 'Claim available rewards'
                           }
+                          aria-describedby={`claim-tooltip-${stake.index}`}
                         >
                           <span>
                             <Button
@@ -244,58 +367,57 @@ const PerformanceOverview = ({ mlmData, stakes, notRegistered, handleWithdrawSta
               </Table>
             </TableContainer>
           )}
-        </>
-      )}
 
-      {!notRegistered && (
-        <Card sx={{ p: 2, boxShadow: 2, mt: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-              <MonetizationOnIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
-              <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                Earning Limit
-              </Typography>
-            </Box>
-            <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-              {formatCurrency(earningLimit)}
-            </Typography>
-            <Box sx={{ mb: 2 }}>
-              <LinearProgress
-                variant="determinate"
-                value={percentage}
-                sx={{
-                  height: 10,
-                  borderRadius: 5,
-                  backgroundColor: 'grey.200',
-                  '& .MuiLinearProgress-bar': {
-                    backgroundColor: percentage > 80 ? 'warning.main' : 'success.main',
-                  }
-                }}
-              />
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.8rem' }}>
-                {percentage.toFixed(2)}% Used
-              </Typography>
-            </Box>
-            <Grid container spacing={1}>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.85rem' }}>
-                  Used: {formatCurrency(used)}
+          <Card sx={{ p: 2, boxShadow: 2, mt: 3 }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
+                <MonetizationOnIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                  Earning Limit
                 </Typography>
-              </Grid>
-              <Grid item xs={6}>
-                <Typography variant="body2" color="success.main" sx={{ fontSize: '0.85rem' }}>
-                  Remaining: {formatCurrency(remaining)}
+              </Box>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+                {formatCurrency(financialMetrics.earningLimit)}
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={financialMetrics.percentage}
+                  sx={{
+                    height: 10,
+                    borderRadius: 5,
+                    backgroundColor: 'grey.200',
+                    '& .MuiLinearProgress-bar': {
+                      backgroundColor: financialMetrics.percentage > 80 ? 'warning.main' : 'success.main',
+                    },
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.8rem' }}>
+                  {financialMetrics.percentage.toFixed(2)}% Used
                 </Typography>
+              </Box>
+              <Grid container spacing={1}>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.85rem' }}>
+                    Used: {formatCurrency(financialMetrics.used)}
+                  </Typography>
+                </Grid>
+                <Grid item xs={6}>
+                  <Typography variant="body2" color="success.main" sx={{ fontSize: '0.85rem' }}>
+                    Remaining: {formatCurrency(financialMetrics.remaining)}
+                  </Typography>
+                </Grid>
               </Grid>
-            </Grid>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mt: 1 }}>
-              USDC
-            </Typography>
-          </CardContent>
-        </Card>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mt: 1 }}>
+                USDC
+              </Typography>
+            </CardContent>
+          </Card>
+        </>
       )}
     </Card>
   );
 };
+
 
 export default PerformanceOverview;

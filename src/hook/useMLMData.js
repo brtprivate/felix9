@@ -14,6 +14,10 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
     directIncome: 0,
     contractPercent: 0,
     maxRoi: 0,
+    contractBalance: 0,
+    directBusiness: 0,
+    referrer: '',
+    totalWithdrawn: 0,
   });
   const [stakes, setStakes] = useState([]);
   const [notRegistered, setNotRegistered] = useState(false);
@@ -144,15 +148,19 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
           referrerBonus: 0n,
           isRegistered: false,
           stakeCount: 0n,
+          directBusiness: 0n,
+          totalWithdrawn: 0n,
         };
       }
 
-      const [usdcBalanceRaw, directIncome, contractPercent, maxRoi] =
+      const [usdcBalanceRaw, directIncome, contractPercent, maxRoi, contractBalanceRaw, totalUsersRaw] =
         await Promise.all([
           dwcContractInteractions.getUSDCBalance(wallet.account),
           dwcContractInteractions.getDirectIncome(),
           dwcContractInteractions.getContractPercent(),
           dwcContractInteractions.getMaxRoi(),
+          dwcContractInteractions.getContractBalance(),
+          dwcContractInteractions.getUsersLength(),
         ]);
 
       const stakeRecords = [];
@@ -161,65 +169,139 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
       console.log("User registered:", userRecord.isRegistered);
       console.log("User stake count:", userRecord.stakeCount);
 
-      if (userRecord.isRegistered && Number(userRecord.stakeCount) > 0) {
-        for (let i = 0; i < Number(userRecord.stakeCount); i++) {
-          console.log(`\n📌 Processing stake #${i}...`);
-          try {
-            const stake = await dwcContractInteractions.getStakeRecord(
-              wallet.account,
-              BigInt(i)
-            );
-            console.log("✅ Stake record fetched:", stake);
+      // if (userRecord.isRegistered && Number(userRecord.stakeCount) > 0) {
+      //   for (let i = 0; i < Number(userRecord.stakeCount); i++) {
+      //     console.log(`\n📌 Processing stake #${i}...`);
+      //     try {
+      //       const stake = await dwcContractInteractions.getStakeRecord(
+      //         wallet.account,
+      //         BigInt(i)
+      //       );
+      //       console.log("✅ Stake record fetched:", stake);
 
-            // Adjust packageIndex to account for 1-based indexing
-            const adjustedPackageIndex = Number(stake.packageIndex);
-            console.log("📦 Adjusted package index:", adjustedPackageIndex);
+      //       // Adjust packageIndex to account for 1-based indexing
+      //       const adjustedPackageIndex = Number(stake.packageIndex);
+      //       console.log("📦 Adjusted package index:", adjustedPackageIndex);
 
-            const packagePrice = await dwcContractInteractions.getPackagePrice(
-              BigInt(adjustedPackageIndex)
-            );
-            console.log("💰 Package price (raw):", packagePrice.toString());
+      //       const packagePrice = await dwcContractInteractions.getPackagePrice(
+      //         BigInt(adjustedPackageIndex)
+      //       );
+      //       console.log("💰 Package price (raw):", packagePrice.toString());
 
-            const roiPercent = await dwcContractInteractions.getRoiPercent(
-              BigInt(adjustedPackageIndex)
-            );
-            console.log("📈 ROI Percent:", roiPercent.toString());
+      //       const roiPercent = await dwcContractInteractions.getRoiPercent(
+      //         BigInt(adjustedPackageIndex)
+      //       );
+      //       console.log("📈 ROI Percent:", roiPercent.toString());
 
-            const claimable = await dwcContractInteractions.calculateClaimAble(
-              wallet.account,
-              BigInt(i)
-            );
-            console.log("🎯 Claimable amount (raw):", claimable.toString());
+      //       const claimable = await dwcContractInteractions.calculateClaimAble(
+      //         wallet.account,
+      //         BigInt(i)
+      //       );
+      //       console.log("🎯 Claimable amount (raw):", claimable.toString());
 
-            // Find the package with the adjusted index
-            const packageInfo = packages.find(
-              (pkg) => pkg.index === adjustedPackageIndex
-            );
-            console.log("📦 Matched package info:", packageInfo);
+      //       // Find the package with the adjusted index
+      //       const packageInfo = packages.find(
+      //         (pkg) => pkg.index === adjustedPackageIndex
+      //       );
+      //       console.log("📦 Matched package info:", packageInfo);
 
-            const formattedStake = {
-              index: i,
-              packageIndex: adjustedPackageIndex,
-              packageName:
-                packageInfo?.name || `Package ${adjustedPackageIndex}`,
-              packagePrice: parseFloat(formatUnits(packagePrice, 18)),
-              roiPercent: Number(roiPercent),
-              lastClaimTime: Number(stake.lasClaimTime), // ⚠️ Typo? Should be 'lastClaimTime'
-              rewardClaimed: parseFloat(formatUnits(stake.rewardClaimed, 18)),
-              claimable: parseFloat(formatUnits(claimable, 18)),
-            };
+      //       const formattedStake = {
+      //         index: i,
+      //         packageIndex: adjustedPackageIndex,
+      //         packageName:
+      //           packageInfo?.name || `Package ${adjustedPackageIndex}`,
+      //         packagePrice: parseFloat(formatUnits(packagePrice, 18)),
+      //         roiPercent: Number(roiPercent),
+      //         lastClaimTime: Number(stake.lasClaimTime), // ⚠️ Typo? Should be 'lastClaimTime'
+      //         rewardClaimed: parseFloat(formatUnits(stake.rewardClaimed, 18)),
+      //         claimable: parseFloat(formatUnits(claimable, 18)),
+      //       };
 
-            console.log("📊 Final formatted stake:", formattedStake);
+      //       console.log("📊 Final formatted stake:", formattedStake);
 
-            stakeRecords.push(formattedStake);
-          } catch (e) {
-            console.error(`❌ Error fetching stake #${i}:`, e);
-          }
-        }
-      } else {
-        console.log("⚠️ User not registered or no stakes found.");
+      //       stakeRecords.push(formattedStake);
+      //     } catch (e) {
+      //       console.error(`❌ Error fetching stake #${i}:`, e);
+      //     }
+      //   }
+      // } else {
+      //   console.log("⚠️ User not registered or no stakes found.");
+      // }
+    console.log("userRecord",userRecord)
+if (userRecord.isRegistered && Number(userRecord.stakeCount) > 0) {
+  for (let i = 0; i < Number(userRecord.stakeCount); i++) {
+    console.log(`\n📌 Processing stake #${i}...`);
+    try {
+      const stake = await dwcContractInteractions.getStakeRecord(
+        wallet.account,
+        BigInt(i)
+      );
+      console.log("✅ Stake record fetched:", stake);
+
+      // Adjust packageIndex to account for 1-based indexing
+      const adjustedPackageIndex = Number(stake.packageIndex);
+      console.log("📦 Adjusted package index:", adjustedPackageIndex);
+
+      // Validate package index
+      if (adjustedPackageIndex < 1 || adjustedPackageIndex > 14) {
+        console.error(`Invalid package index: ${adjustedPackageIndex}`);
+        continue;
       }
 
+      const packagePrice = await dwcContractInteractions.getPackagePrice(
+        BigInt(adjustedPackageIndex)
+      );
+      if (!packagePrice) {
+        console.error(`No package price for index ${adjustedPackageIndex}`);
+        continue;
+      }
+      console.log("💰 Package price (raw):", packagePrice.toString());
+
+      const roiPercent = await dwcContractInteractions.getRoiPercent(
+        BigInt(adjustedPackageIndex)
+      );
+      if (!roiPercent) {
+        console.error(`No ROI percent for index ${adjustedPackageIndex}`);
+        continue;
+      }
+      console.log("📈 ROI Percent:", roiPercent.toString());
+
+      const claimable = await dwcContractInteractions.calculateClaimAble(
+        wallet.account,
+        BigInt(i)
+      );
+      if (!claimable) {
+        console.error(`No claimable amount for stake #${i}`);
+        continue;
+      }
+      console.log("🎯 Claimable amount (raw):", claimable.toString());
+
+      // Find the package with the adjusted index
+      const packageInfo = packages.find(
+        (pkg) => pkg.index === adjustedPackageIndex
+      );
+      console.log("📦 Matched package info:", packageInfo);
+
+      const formattedStake = {
+        index: i,
+        packageIndex: adjustedPackageIndex,
+        packageName: packageInfo?.name || `Package ${adjustedPackageIndex}`,
+        packagePrice: parseFloat(formatUnits(packagePrice, 18)),
+        roiPercent: Number(roiPercent),
+        lastClaimTime: Number(stake.lasClaimTime), // Fixed typo
+        rewardClaimed: parseFloat(formatUnits(stake.rewardClaimed, 18)),
+        claimable: parseFloat(formatUnits(claimable, 18)),
+      };
+
+      console.log("📊 Final formatted stake:", formattedStake);
+      stakeRecords.push(formattedStake);
+    } catch (e) {
+      console.error(`❌ Error fetching stake #${i}:`, e);
+    }
+  }
+} else {
+  console.log("⚠️ User not registered or no stakes found.");
+}
       console.log(
         "✅ All stakes processed. Total records:",
         stakeRecords.length
@@ -234,10 +316,14 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
         isRegistered: userRecord.isRegistered,
         stakeCount: Number(userRecord.stakeCount),
         usdcBalance: parseFloat(formatUnits(usdcBalanceRaw, 18)),
-        totalUsers: 0,
+        totalUsers: Number(totalUsersRaw),
         directIncome: parseFloat(formatUnits(directIncome, 18)),
         contractPercent: Number(contractPercent),
         maxRoi: parseFloat(formatUnits(maxRoi, 18)),
+        contractBalance: parseFloat(formatUnits(contractBalanceRaw, 18)),
+        directBusiness: parseFloat(formatUnits(userRecord.directBusiness, 18)),
+        referrer: userRecord.referrer,
+        totalWithdrawn: parseFloat(formatUnits(userRecord.totalWithdrawn, 18)),
       });
 
       setNotRegistered(!userRecord.isRegistered);

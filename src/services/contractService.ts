@@ -19,7 +19,7 @@ export { USDC_ABI };
 
 // Contract configuration - BSC Testnet
 export const DWC_CONTRACT_ADDRESS =
-  "0xf0167ffe0480dca027c2328f8102d0cb649110ca" as Address;
+  "0xb7Fd358310508e978bbCD20C0C638850CCfCd43F" as Address;
 export const TESTNET_CHAIN_ID = 97;
 
 // DWC Contract ABI
@@ -202,7 +202,7 @@ export const DWC_ABI = [
     inputs: [
       { internalType: "uint256", name: "_directIncome", type: "uint256" },
     ],
-    name: "changeDirectIncome",
+    name: "changeDirectPercentage",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -217,6 +217,20 @@ export const DWC_ABI = [
   {
     inputs: [],
     name: "directIncome",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getContractBalance",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getUSersLengh",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
@@ -280,6 +294,7 @@ export const DWC_ABI = [
       { internalType: "uint256", name: "packageIndex", type: "uint256" },
       { internalType: "uint256", name: "lasClaimTime", type: "uint256" },
       { internalType: "uint256", name: "rewardClaimed", type: "uint256" },
+      { internalType: "uint256", name: "maxRoi", type: "uint256" },
     ],
     stateMutability: "view",
     type: "function",
@@ -313,8 +328,10 @@ export const DWC_ABI = [
     name: "userRecord",
     outputs: [
       { internalType: "uint256", name: "totalInvestment", type: "uint256" },
+      { internalType: "uint256", name: "directBusiness", type: "uint256" },
       { internalType: "address", name: "referrer", type: "address" },
       { internalType: "uint256", name: "referrerBonus", type: "uint256" },
+      { internalType: "uint256", name: "totalWithdrawn", type: "uint256" },
       { internalType: "bool", name: "isRegistered", type: "bool" },
       { internalType: "uint256", name: "stakeCount", type: "uint256" },
     ],
@@ -332,10 +349,11 @@ export const DWC_ABI = [
 ];
 // Interfaces for complex return types
 interface UserRecord {
-  referrals: boolean;
   totalInvestment: bigint;
+  directBusiness: bigint;
   referrer: Address;
   referrerBonus: bigint;
+  totalWithdrawn: bigint;
   isRegistered: boolean;
   stakeCount: bigint;
 }
@@ -344,8 +362,8 @@ interface StakeRecord {
   packageIndex: bigint;
   lasClaimTime: bigint;
   rewardClaimed: bigint;
+  maxRoi: bigint;
 }
-
 // Interface for contract interactions
 interface DWCContractInteractions {
   approveUSDC: (amount: bigint, account: Address) => Promise<`0x${string}`>;
@@ -392,6 +410,8 @@ interface DWCContractInteractions {
   getOwner: () => Promise<Address>;
   getUniqueUsers: (index: bigint) => Promise<Address>;
   calculateClaimAble: (user: Address, index: bigint) => Promise<bigint>;
+  getUsersLength: () => Promise<bigint>;
+  getContractBalance: () => Promise<bigint>;
 }
 
 // Helper function to format percentages
@@ -1262,12 +1282,49 @@ export const dwcContractInteractions: DWCContractInteractions = {
     }
   },
 
-  async getUserRecord(user: Address): Promise<UserRecord> {
+  // async getUserRecord(user: Address): Promise<UserRecord> {
+  //   try {
+  //     const [
+  //       totalInvestment,
+  //       referrer,
+  //       referrerBonus,
+  //       isRegistered,
+  //       stakeCount,
+  //     ] = (await readContract(config, {
+  //       abi: DWC_ABI,
+  //       address: DWC_CONTRACT_ADDRESS,
+  //       functionName: "userRecord",
+  //       args: [user],
+  //       chainId: TESTNET_CHAIN_ID,
+  //     })) as [bigint, Address, bigint, boolean, bigint];
+  //     console.log(`User record for ${user}:`, {
+  //       totalInvestment,
+  //       referrer,
+  //       referrerBonus,
+  //       isRegistered,
+  //       stakeCount,
+  //     });
+  //     return {
+  //       referrals: false,
+  //       totalInvestment,
+  //       referrer,
+  //       referrerBonus,
+  //       isRegistered,
+  //       stakeCount,
+  //     };
+  //   } catch (error: any) {
+  //     console.error(`Error fetching user record: ${error.message || error}`);
+  //     throw error;
+  //   }
+  // },
+async getUserRecord(user: Address): Promise<UserRecord> {
     try {
       const [
         totalInvestment,
+        directBusiness,
         referrer,
         referrerBonus,
+        totalWithdrawn,
         isRegistered,
         stakeCount,
       ] = (await readContract(config, {
@@ -1276,19 +1333,27 @@ export const dwcContractInteractions: DWCContractInteractions = {
         functionName: "userRecord",
         args: [user],
         chainId: TESTNET_CHAIN_ID,
-      })) as [bigint, Address, bigint, boolean, bigint];
+      })) as [bigint, bigint, Address, bigint, bigint, boolean, bigint];
+
+      if (totalInvestment === undefined || directBusiness === undefined) { // Example check; extend as needed
+        throw new Error('Undefined fields in userRecord response');
+      }
+
       console.log(`User record for ${user}:`, {
         totalInvestment,
+        directBusiness,
         referrer,
         referrerBonus,
+        totalWithdrawn,
         isRegistered,
         stakeCount,
       });
       return {
-        referrals: false,
         totalInvestment,
+        directBusiness,
         referrer,
         referrerBonus,
+        totalWithdrawn,
         isRegistered,
         stakeCount,
       };
@@ -1297,31 +1362,60 @@ export const dwcContractInteractions: DWCContractInteractions = {
       throw error;
     }
   },
-
-  async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
+  // async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
+  //   try {
+  //     const [packageIndex, lasClaimTime, rewardClaimed] = (await readContract(
+  //       config,
+  //       {
+  //         abi: DWC_ABI,
+  //         address: DWC_CONTRACT_ADDRESS,
+  //         functionName: "stakeRecord",
+  //         args: [user, index],
+  //         chainId: TESTNET_CHAIN_ID,
+  //       }
+  //     )) as [bigint, bigint, bigint];
+  //     console.log(`Stake record for ${user} at index ${index}:`, {
+  //       packageIndex,
+  //       lasClaimTime,
+  //       rewardClaimed,
+  //     });
+  //     return { packageIndex, lasClaimTime, rewardClaimed };
+  //   } catch (error: any) {
+  //     console.error(`Error fetching stake record: ${error.message || error}`);
+  //     throw error;
+  //   }
+  // },
+async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
     try {
-      const [packageIndex, lasClaimTime, rewardClaimed] = (await readContract(
-        config,
-        {
-          abi: DWC_ABI,
-          address: DWC_CONTRACT_ADDRESS,
-          functionName: "stakeRecord",
-          args: [user, index],
-          chainId: TESTNET_CHAIN_ID,
-        }
-      )) as [bigint, bigint, bigint];
+      const [
+        packageIndex,
+        lasClaimTime,
+        rewardClaimed,
+        maxRoi,
+      ] = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "stakeRecord",
+        args: [user, index],
+        chainId: TESTNET_CHAIN_ID,
+      })) as [bigint, bigint, bigint, bigint];
+
+      if (packageIndex === undefined) {
+        throw new Error('Undefined response from stakeRecord');
+      }
+
       console.log(`Stake record for ${user} at index ${index}:`, {
         packageIndex,
         lasClaimTime,
         rewardClaimed,
+        maxRoi,
       });
-      return { packageIndex, lasClaimTime, rewardClaimed };
+      return { packageIndex, lasClaimTime, rewardClaimed, maxRoi };
     } catch (error: any) {
       console.error(`Error fetching stake record: ${error.message || error}`);
       throw error;
     }
   },
-
   async getPackagePrice(index: bigint): Promise<bigint> {
     try {
       const price = (await readContract(config, {
@@ -1482,6 +1576,40 @@ export const dwcContractInteractions: DWCContractInteractions = {
       throw error;
     }
   },
+
+  async getUsersLength(): Promise<bigint> {
+    try {
+      const length = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "getUSersLengh",
+        chainId: TESTNET_CHAIN_ID,
+      })) as bigint;
+      console.log(`Users length: ${length}`);
+      return length;
+    } catch (error: any) {
+      console.error(`Error fetching users length: ${error.message || error}`);
+      throw error;
+    }
+  },
+
+  async getContractBalance(): Promise<bigint> {
+    try {
+      const balance = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "getContractBalance",
+        chainId: TESTNET_CHAIN_ID,
+      })) as bigint;
+      console.log(`Contract balance: ${formatUnits(balance, 18)} USDC`);
+      return balance;
+    } catch (error: any) {
+      console.error(
+        `Error fetching contract balance: ${error.message || error}`
+      );
+      throw error;
+    }
+  },
 };
 
 // Export individual functions for convenience
@@ -1521,4 +1649,6 @@ export const {
   getOwner,
   getUniqueUsers,
   calculateClaimAble,
+  getContractBalance,
+  getUsersLength,
 } = dwcContractInteractions;
