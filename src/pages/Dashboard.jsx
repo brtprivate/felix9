@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useWallet } from '../context/WalletContext';
 import { useChainId, useSwitchChain } from 'wagmi';
-import { TESTNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
+import { MAINNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { config } from '../config/web3modal';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -34,17 +34,20 @@ const Dashboard = () => {
   const { mlmData, stakes, fetchMlmData, notRegistered } = useMLMData(wallet, chainId, switchChain, setError, setIsLoading);
   const { packageDetails, packages } = usePackageDetails();
 
+  // ============================
+  // Register user
+  // ============================
   const handleRegister = async () => {
     if (!wallet.isConnected || !wallet.account) {
       setError('Please connect your wallet to register.');
       return;
     }
 
-    if (chainId !== TESTNET_CHAIN_ID) {
+    if (chainId !== MAINNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: TESTNET_CHAIN_ID });
+        await switchChain({ chainId: MAINNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Testnet.');
+        setError('Please switch to BSC Mainnet.');
         return;
       }
     }
@@ -54,9 +57,10 @@ const Dashboard = () => {
       setError('');
       setSuccess('');
 
-      const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7';
+      const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7'; // fallback referrer
       const registerTx = await dwcContractInteractions.registration(refCode, wallet.account);
-      await waitForTransactionReceipt(config, { hash: registerTx, chainId: TESTNET_CHAIN_ID });
+
+      await waitForTransactionReceipt(config, { hash: registerTx, chainId: MAINNET_CHAIN_ID });
 
       setSuccess(`Registration successful! Transaction: ${registerTx}`);
       setReferralCode('');
@@ -76,17 +80,20 @@ const Dashboard = () => {
     }
   };
 
+  // ============================
+  // Withdraw Stake
+  // ============================
   const handleWithdrawStake = async (index) => {
     if (!wallet.isConnected || !wallet.account) {
       setError('Please connect your wallet to withdraw.');
       return;
     }
 
-    if (chainId !== TESTNET_CHAIN_ID) {
+    if (chainId !== MAINNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: TESTNET_CHAIN_ID });
+        await switchChain({ chainId: MAINNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Testnet.');
+        setError('Please switch to BSC Mainnet.');
         return;
       }
     }
@@ -96,15 +103,7 @@ const Dashboard = () => {
       setError('');
       setSuccess('');
 
-      console.log('=== WITHDRAWAL DEBUG INFO ===');
-      console.log(`Stake index: ${index}`);
-      console.log(`User account: ${wallet.account}`);
-      console.log(`UI Registration status: ${mlmData.isRegistered}`);
-      console.log(`UI Stake count: ${mlmData.stakeCount}`);
-      console.log(`Stakes array:`, stakes);
-
       const stakeToWithdraw = stakes.find((s) => s.index === index);
-      console.log(`Stake to withdraw:`, stakeToWithdraw);
 
       if (!stakeToWithdraw) {
         setError('Stake not found. Please refresh and try again.');
@@ -121,7 +120,7 @@ const Dashboard = () => {
       const txHash = await dwcContractInteractions.withdraw(BigInt(index), wallet.account);
 
       setSuccess('Transaction submitted! Waiting for confirmation...');
-      await waitForTransactionReceipt(config, { hash: txHash, chainId: TESTNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { hash: txHash, chainId: MAINNET_CHAIN_ID });
 
       setSuccess(`Successfully withdrawn $${stakeToWithdraw.claimable.toFixed(4)} USDC! Transaction: ${txHash}`);
 
@@ -145,9 +144,12 @@ const Dashboard = () => {
     }
   };
 
+  // ============================
+  // UI Renders
+  // ============================
   if (!wallet.isConnected) {
     return (
-      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 }, background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)', minHeight: '100vh' }}>
+      <Container maxWidth="xl" sx={{ py: 2, background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)', minHeight: '100vh' }}>
         <Alert severity="warning">Please connect your wallet to view the dashboard.</Alert>
       </Container>
     );
@@ -157,7 +159,7 @@ const Dashboard = () => {
     return (
       <Container
         maxWidth="xl"
-        sx={{ py: { xs: 2, sm: 3 }, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)' }}
+        sx={{ py: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)' }}
       >
         <CircularProgress />
       </Container>
@@ -222,7 +224,7 @@ const Dashboard = () => {
   ) : null;
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 }, background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)', minHeight: '100vh' }}>
+    <Container maxWidth="xl" sx={{ py: 2, background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)', minHeight: '100vh' }}>
       {registrationAlert}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -235,43 +237,27 @@ const Dashboard = () => {
         </Alert>
       )}
 
-      <Box
-        sx={{
-          mb: { xs: 2, sm: 4 },
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          justifyContent: 'space-between',
-          alignItems: { xs: 'stretch', sm: 'center' },
-          gap: 2,
-        }}
-      >
+      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ color: 'primary.main', fontWeight: 'bold', fontSize: { xs: '1.5rem', sm: '2rem' } }}
-          >
+          <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
             Dashboard
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+          <Typography variant="body1" color="text.secondary">
             Monitor your team performance and manage your package investments
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1, width: { xs: '100%', sm: 'auto' } }}>
-          <Button
-            variant="outlined"
-            startIcon={<RefreshIcon />}
-            onClick={fetchMlmData}
-            disabled={isLoading}
-            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
-          >
-            Refresh
-          </Button>
-        </Box>
+        <Button
+          variant="outlined"
+          startIcon={<RefreshIcon />}
+          onClick={fetchMlmData}
+          disabled={isLoading}
+        >
+          Refresh
+        </Button>
       </Box>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={8} sx={{ order: { xs: 2, md: 1 } }}>
+        <Grid item xs={12} md={8}>
           <PerformanceOverview
             mlmData={mlmData}
             stakes={stakes}
@@ -280,7 +266,7 @@ const Dashboard = () => {
             isLoading={isLoading}
           />
         </Grid>
-        <Grid item xs={12} md={4} sx={{ order: { xs: 1, md: 2 } }}>
+        <Grid item xs={12} md={4}>
           <PackagePurchase
             notRegistered={notRegistered}
             packages={packages}

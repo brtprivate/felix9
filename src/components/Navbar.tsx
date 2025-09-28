@@ -146,7 +146,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
     if (isMLMSection) {
       return 'Felix9';
     } else if (isGamingSection) {
-      return 'BDC STACK';
+      return 'Felix9';
     }
     return 'Felix9';
   };
@@ -170,7 +170,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                 color: 'white',
                 display: 'flex',
                 alignItems: 'center',
-                fontSize: { xs: '0.9rem', sm: '1.1rem' }
+                fontSize: { xs: '1.2rem', sm: '1.4rem' }
               }}
             >
               <Logo
@@ -184,7 +184,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                 {getPageTitle()}
               </Box>
               {isMobile && (
-                <Box component="span" sx={{ ml: 0.2, fontSize: '0.8rem' }}>
+                <Box component="span" sx={{ ml: 0.2, fontSize: '1rem' }}>
                   Felix9
                 </Box>
               )}
@@ -437,57 +437,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
               }}
               showLabels
             >
-              <BottomNavigationAction
-                label="Dashboard"
-                value="dashboard"
-                icon={<DashboardIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate('/?section=dashboard')}
-              />
-              <BottomNavigationAction
-                label="My Holding"
-                value="my-holding"
-                icon={<AccountBalanceWalletIcon sx={{ fontSize: 18 }} />}
-                component={RouterLink}
-                to="/my-holding"
-              />
-              <BottomNavigationAction
-                label="My Team"
-                value="my-team"
-                icon={<PeopleIcon sx={{ fontSize: 18 }} />}
-                component={RouterLink}
-                to="/my-team"
-              />
-              <BottomNavigationAction
-                label="Packages"
-                value="packages"
-                icon={<DiamondIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate('/?section=packages')}
-              />
-              <BottomNavigationAction
-                label="My Plans"
-                value="my-investments"
-                icon={<AccountBalanceWalletIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate('/?section=my-investments')}
-              />
-              <BottomNavigationAction
-                label="ROI"
-                value="daily-roi"
-                icon={<TrendingUpIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate('/?section=daily-roi')}
-              />
-              <BottomNavigationAction
-                label="Team"
-                value="team-structure"
-                icon={<PeopleIcon sx={{ fontSize: 18 }} />}
-                onClick={() => navigate('/?section=team-structure')}
-              />
-              <BottomNavigationAction
-                label="Swap"
-                value="swap"
-                icon={<SwapHorizIcon sx={{ fontSize: 18 }} />}
-                component={RouterLink}
-                to="/swap"
-              />
+       
             </BottomNavigation>
           </Box>
         </Paper>
@@ -525,20 +475,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
               component={RouterLink}
               to="/"
             />
-            <BottomNavigationAction
-              label="Dashboard"
-              value="/usd/gaming/dashboard"
-              icon={<DashboardIcon />}
-              component={RouterLink}
-              to="/usd/gaming/dashboard"
-            />
-            <BottomNavigationAction
-              label="Pools"
-              value="/usd/gaming/pools"
-              icon={<CasinoIcon />}
-              component={RouterLink}
-              to="/usd/gaming/pools"
-            />
+
           </BottomNavigation>
         </Paper>
       )}

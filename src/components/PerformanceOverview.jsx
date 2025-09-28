@@ -114,7 +114,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(mlmData.totalInvestment || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -132,7 +132,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(mlmData.referrerBonus || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -168,7 +168,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(financialMetrics.totalClaimed)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -186,7 +186,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(financialMetrics.totalClaimable)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -204,7 +204,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(financialMetrics.totalRewards)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -222,7 +222,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(mlmData.contractBalance || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -258,7 +258,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 {formatCurrency(mlmData.directBusiness || 0)}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>
@@ -320,7 +320,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 <TableHead>
                   <TableRow>
                     <TableCell scope="col">Package</TableCell>
-                    <TableCell scope="col">Price (USDC)</TableCell>
+                    <TableCell scope="col">Price (USDT)</TableCell>
                     <TableCell scope="col">ROI %</TableCell>
                     <TableCell scope="col">Last Claim</TableCell>
                     <TableCell scope="col">Rewards Claimed</TableCell>
@@ -410,7 +410,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                 </Grid>
               </Grid>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mt: 1 }}>
-                USDC
+                USDT
               </Typography>
             </CardContent>
           </Card>

@@ -38,6 +38,7 @@ import {
   TransferWithinAStation as TransferIcon,
   Update as UpdateIcon,
   Security as SecurityIcon,
+  Savings as RewardIcon, // New icon for stake rewards
 } from '@mui/icons-material';
 import { useAccount } from 'wagmi';
 import { useWallet } from '../context/WalletContext';
@@ -51,6 +52,7 @@ import {
   changeDirectIncome,
   transferOwnership,
   updateRoiPercent,
+  getAllStakeReward, // Import the getAllStakeReward function
 } from '../services/contractService';
 import { formatUnits, parseUnits } from 'viem';
 
@@ -62,6 +64,7 @@ const Admin: React.FC = () => {
   const [currentOwner, setCurrentOwner] = useState('');
   const [directIncome, setDirectIncome] = useState('');
   const [contractBalance, setContractBalance] = useState('');
+  const [totalStakeRewards, setTotalStakeRewards] = useState(''); // New state for total stake rewards
   const [roiPercents, setRoiPercents] = useState<string[]>([]);
 
   // Form states
@@ -72,13 +75,21 @@ const Admin: React.FC = () => {
   const [newRoiPercent, setNewRoiPercent] = useState('');
 
   const [actionLoading, setActionLoading] = useState(false);
-  const [confirmDialog, setConfirmDialog] = useState<{ open: boolean; action: string; message: string; onConfirm: () => void }>({
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    action: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
     open: false,
     action: '',
     message: '',
     onConfirm: () => {},
   });
-  const [alert, setAlert] = useState<{ severity: 'success' | 'error' | 'warning' | 'info'; message: string } | null>(null);
+  const [alert, setAlert] = useState<{
+    severity: 'success' | 'error' | 'warning' | 'info';
+    message: string;
+  } | null>(null);
 
   const { account, isConnected } = useWallet();
   const { address } = useAccount();
@@ -139,8 +150,11 @@ const Admin: React.FC = () => {
         const balance = await getContractBalance();
         setContractBalance(formatUnits(balance, 18));
 
+        const rewards = await getAllStakeReward(); // Fetch total stake rewards
+        setTotalStakeRewards(formatUnits(rewards, 18)); // Format with 18 decimals
+
         const percents = [];
-        for (let i = 1; i <= 14; i++) { // Start from 1 to 14
+        for (let i = 1; i <= 14; i++) {
           const percent = await getRoiPercent(BigInt(i));
           percents[i] = percent.toString(); // Index from 1
         }
@@ -181,7 +195,6 @@ const Admin: React.FC = () => {
       const amount = parseUnits(liquidityAmount, 18);
       await liquidity(amount, address as `0x${string}`);
       setAlert({ severity: 'success', message: 'Liquidity added successfully' });
-      // Refresh balance
       const balance = await getContractBalance();
       setContractBalance(formatUnits(balance, 18));
       setLiquidityAmount('');
@@ -197,7 +210,7 @@ const Admin: React.FC = () => {
     setConfirmDialog({
       open: true,
       action: 'Change Direct Income',
-      message: `Are you sure you want to change the direct income to ${newDirectIncome}? This action cannot be undone.`,
+      message: `Are you sure you want to change the direct income to ${newDirectIncome}%? This action cannot be undone.`,
       onConfirm: async () => {
         setConfirmDialog({ open: false, action: '', message: '', onConfirm: () => {} });
         setActionLoading(true);
@@ -305,8 +318,8 @@ const Admin: React.FC = () => {
           sx={{
             mt: 4,
             mb: 4,
-            background: prefersDarkMode 
-              ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)' 
+            background: prefersDarkMode
+              ? 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)'
               : 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
             borderRadius: 3,
             p: 3,
@@ -335,8 +348,8 @@ const Admin: React.FC = () => {
             <Grid item xs={12}>
               <Card
                 sx={{
-                  background: prefersDarkMode 
-                    ? 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)' 
+                  background: prefersDarkMode
+                    ? 'linear-gradient(135deg, #2c3e50 0%, #34495e 100%)'
                     : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                   color: 'common.white',
                   boxShadow: 4,
@@ -351,7 +364,7 @@ const Admin: React.FC = () => {
                     </Typography>
                   </Box>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <OwnerIcon sx={{ mr: 1, color: 'secondary.main' }} />
                         <Typography variant="body1">
@@ -359,19 +372,27 @@ const Admin: React.FC = () => {
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IncomeIcon sx={{ mr: 1, color: 'success.main' }} />
                         <Typography variant="body1">
-                          <strong>Direct Income:</strong> {directIncome/10} %
+                          <strong>Direct Income:</strong> {directIncome / 10} %
                         </Typography>
                       </Box>
                     </Grid>
-                    <Grid item xs={12} md={4}>
+                    <Grid item xs={12} md={3}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <BalanceIcon sx={{ mr: 1, color: 'warning.main' }} />
                         <Typography variant="body1">
-                          <strong>Contract Balance:</strong> {contractBalance} USDC
+                          <strong>Contract Balance:</strong> {contractBalance} USDT
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid item xs={12} md={3}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <RewardIcon sx={{ mr: 1, color: 'info.main' }} />
+                        <Typography variant="body1">
+                          <strong>Total Stake Rewards:</strong> {totalStakeRewards} USDT
                         </Typography>
                       </Box>
                     </Grid>
@@ -380,7 +401,7 @@ const Admin: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                       <RoiIcon sx={{ mr: 1, color: 'info.main' }} />
                       <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                        ROI Percents 
+                        ROI Percents
                       </Typography>
                     </Box>
                     <Grid container spacing={1}>
@@ -405,7 +426,7 @@ const Admin: React.FC = () => {
                               {pkg.name}
                             </Typography>
                             <Typography variant="body1" sx={{ color: 'info.main' }}>
-                              {(roiPercents[pkg.index] || pkg.roiPercent)/10}%
+                              {(roiPercents[pkg.index] || pkg.roiPercent) / 10}%
                             </Typography>
                             <Typography variant="caption" sx={{ display: 'block', mt: 0.5 }}>
                               ${pkg.price}
@@ -431,14 +452,14 @@ const Admin: React.FC = () => {
                   </Box>
                   <TextField
                     fullWidth
-                    label="Amount (USDC)"
+                    label="Amount (USDT)"
                     type="number"
                     value={liquidityAmount}
                     onChange={(e) => setLiquidityAmount(e.target.value)}
                     sx={{ mb: 2 }}
                     variant="outlined"
                   />
-                  <Tooltip title="Add USDC liquidity to the contract">
+                  <Tooltip title="Add USDT liquidity to the contract">
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}

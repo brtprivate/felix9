@@ -5,7 +5,7 @@ import {
   waitForTransactionReceipt,
 } from "@wagmi/core";
 import { config } from "../config/web3modal";
-import { bscTestnet } from "wagmi/chains";
+import { bsc } from "wagmi/chains";
 import type { Address } from "viem";
 import { parseUnits, formatUnits, decodeErrorResult } from "viem";
 import {
@@ -19,8 +19,9 @@ export { USDC_ABI };
 
 // Contract configuration - BSC Testnet
 export const DWC_CONTRACT_ADDRESS =
-  "0xb7Fd358310508e978bbCD20C0C638850CCfCd43F" as Address;
-export const TESTNET_CHAIN_ID = 97;
+  "0x1cB6984E1A61416AEaf8Aa1787cbE116Ea10b11b" as Address;
+export const MAINNET_CHAIN_ID = 56;
+export const TESTNET_CHAIN_ID = MAINNET_CHAIN_ID;
 
 // DWC Contract ABI
 export const DWC_ABI = [
@@ -236,6 +237,23 @@ export const DWC_ABI = [
     type: "function",
   },
   {
+    inputs: [{ internalType: "address", name: "_user", type: "address" }],
+    name: "getUserReferrers",
+    outputs: [
+      { internalType: "address[]", name: "", type: "address[]" },
+      { internalType: "uint256", name: "", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "getallstakereward",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [{ internalType: "uint256", name: "_amount", type: "uint256" }],
     name: "liquidity",
     outputs: [],
@@ -399,6 +417,7 @@ interface DWCContractInteractions {
     account: Address
   ) => Promise<`0x${string}`>;
   getUSDCBalance: (account: Address) => Promise<bigint>;
+  getUSDTBalance: (account: Address) => Promise<bigint>;
   getUserRecord: (user: Address) => Promise<UserRecord>;
   getStakeRecord: (user: Address, index: bigint) => Promise<StakeRecord>;
   getPackagePrice: (index: bigint) => Promise<bigint>;
@@ -412,6 +431,8 @@ interface DWCContractInteractions {
   calculateClaimAble: (user: Address, index: bigint) => Promise<bigint>;
   getUsersLength: () => Promise<bigint>;
   getContractBalance: () => Promise<bigint>;
+  getAllStakeReward: () => Promise<bigint>;
+  getUserReferrers: (user: Address) => Promise<bigint>;
 }
 
 // Helper function to format percentages
@@ -426,6 +447,221 @@ const formatPercentage = (rawValue: bigint, divider: bigint): string => {
 };
 
 // Helper function for package purchase with mandatory approval
+// async function buyPackage(
+//   functionName: string,
+//   packageIndex: bigint,
+//   account: Address,
+//   context: DWCContractInteractions
+// ): Promise<`0x${string}`> {
+//   const maxRetries = 2;
+//   let attempt = 1;
+
+//   while (attempt <= maxRetries) {
+//     try {
+//       console.log(`=== PACKAGE PURCHASE: ${functionName} ===`);
+//       console.log(`Account: ${account}, Attempt: ${attempt}`);
+
+//       // Step 1: Get package price and check balance
+//       const packagePrice = await context.getPackagePrice(packageIndex);
+//       const balance = await context.getUSDCBalance(account);
+
+//       console.log(`Package price: ${formatUnits(packagePrice, 18)} USDC`);
+//       console.log(`User balance: ${formatUnits(balance, 18)} USDC`);
+
+//       if (balance < packagePrice) {
+//         throw new Error(
+//           `Insufficient USDC balance. Available: ${formatUnits(
+//             balance,
+//             18
+//           )} USDC, Required: ${formatUnits(packagePrice, 18)} USDC`
+//         );
+//       }
+
+//       // Step 2: ALWAYS check current allowance and request approval if needed
+//       const currentAllowance = (await readContract(config, {
+//         abi: USDC_ABI,
+//         address: USDC_CONTRACT_ADDRESS,
+//         functionName: "allowance",
+//         args: [account, DWC_CONTRACT_ADDRESS],
+//         chainId: TESTNET_CHAIN_ID,
+//       })) as bigint;
+
+//       console.log(
+//         `Current allowance: ${formatUnits(currentAllowance, 18)} USDC`
+//       );
+//       console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDC`);
+
+//       // Step 3: Request approval if insufficient allowance
+//       if (currentAllowance < packagePrice) {
+//         console.log(
+//           `🔐 REQUESTING USDC APPROVAL: ${formatUnits(packagePrice, 18)} USDC`
+//         );
+//         console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
+
+//         try {
+//           // Use a higher approval amount to avoid frequent re-approvals
+//           const approvalAmount = packagePrice * 2n; // Approve 2x the package price
+
+//           const approvalTx = await writeContract(config, {
+//             abi: USDC_ABI,
+//             address: USDC_CONTRACT_ADDRESS,
+//             functionName: "approve",
+//             args: [DWC_CONTRACT_ADDRESS, approvalAmount],
+//             chain: bsc,
+//             account: account,
+//           });
+
+//           console.log(`Approval transaction submitted: ${approvalTx}`);
+
+//           // Wait for approval confirmation
+//           const approvalReceipt = await waitForTransactionReceipt(config, {
+//             hash: approvalTx as `0x${string}`,
+//             chainId: TESTNET_CHAIN_ID,
+//           });
+
+//           if (approvalReceipt.status === "reverted") {
+//             throw new Error("USDC approval transaction failed");
+//           }
+
+//           console.log("✅ USDC approval confirmed");
+
+//           // Verify the approval was successful
+//           const newAllowance = (await readContract(config, {
+//             abi: USDC_ABI,
+//             address: USDC_CONTRACT_ADDRESS,
+//             functionName: "allowance",
+//             args: [account, DWC_CONTRACT_ADDRESS],
+//             chainId: TESTNET_CHAIN_ID,
+//           })) as bigint;
+
+//           console.log(
+//             `New allowance after approval: ${formatUnits(
+//               newAllowance,
+//               18
+//             )} USDC`
+//           );
+
+//           if (newAllowance < packagePrice) {
+//             throw new Error(
+//               "Approval verification failed - insufficient allowance after approval"
+//             );
+//           }
+//         } catch (approvalError: any) {
+//           console.error("Approval failed:", approvalError);
+//           if (
+//             approvalError.message?.includes("User rejected") ||
+//             approvalError.message?.includes("cancelled")
+//           ) {
+//             throw new Error(
+//               "USDC approval was cancelled by user. Package purchase cannot proceed without approval."
+//             );
+//           }
+//           throw new Error(
+//             `USDC approval failed: ${
+//               approvalError.message || "Unknown approval error"
+//             }`
+//           );
+//         }
+//       } else {
+//         console.log("✅ Sufficient allowance already exists");
+//       }
+
+//       // Step 4: Execute the package purchase
+//       console.log(`🛒 EXECUTING PACKAGE PURCHASE: ${functionName}`);
+
+//       const txHash = await writeContract(config, {
+//         abi: DWC_ABI,
+//         address: DWC_CONTRACT_ADDRESS,
+//         functionName,
+//         args: [],
+//         chain: bsc,
+//         account,
+//         maxFeePerGas: parseUnits("10", 9),
+//         maxPriorityFeePerGas: parseUnits("5", 9),
+//       });
+
+//       console.log(`Package purchase transaction submitted: ${txHash}`);
+
+//       // Step 5: Wait for purchase confirmation
+//       const receipt = await waitForTransactionReceipt(config, {
+//         hash: txHash as `0x${string}`,
+//         chainId: TESTNET_CHAIN_ID,
+//       });
+
+//       if (receipt.status === "reverted") {
+//         throw new Error(
+//           "Package purchase transaction reverted by the contract."
+//         );
+//       }
+
+//       console.log(`✅ PACKAGE PURCHASE SUCCESSFUL: ${txHash}`);
+//       return txHash as `0x${string}`;
+//     } catch (error: any) {
+//       console.error(`❌ Purchase attempt ${attempt} failed:`, error);
+
+//       // Handle specific errors
+//       if (
+//         error.message?.includes("User rejected") ||
+//         error.message?.includes("cancelled")
+//       ) {
+//         throw new Error("Transaction was cancelled by user.");
+//       }
+
+//       if (error.message?.includes("insufficient funds")) {
+//         throw new Error(
+//           "Insufficient BNB for gas fees. Please add BNB to your wallet."
+//         );
+//       }
+
+//       if (error.message?.includes("Insufficient USDC balance")) {
+//         throw error; // Re-throw balance errors immediately
+//       }
+
+//       if (error.message?.includes("approval")) {
+//         throw error; // Re-throw approval errors immediately
+//       }
+
+//       // Handle contract errors
+//       if (error.cause?.data) {
+//         try {
+//           const decodedError = decodeErrorResult({
+//             abi: DWC_ABI,
+//             data: error.cause.data,
+//           });
+//           console.log("Decoded contract error:", decodedError);
+
+//           if (decodedError.errorName?.includes("User has no existence")) {
+//             throw new Error(
+//               "Registration issue detected. Please try refreshing the page."
+//             );
+//           }
+
+//           throw new Error(
+//             `Contract error: ${
+//               decodedError.errorName || "Unknown contract error"
+//             }`
+//           );
+//         } catch (decodeErr) {
+//           console.warn("Could not decode error:", decodeErr);
+//         }
+//       }
+
+//       // If this is the last attempt, throw the error
+//       if (attempt === maxRetries) {
+//         throw new Error(
+//           `Package purchase failed: ${error.message || "Unknown error"}`
+//         );
+//       }
+
+//       // Wait before retry
+//       console.log(`Retrying in 2 seconds...`);
+//       await new Promise((resolve) => setTimeout(resolve, 2000));
+//       attempt++;
+//     }
+//   }
+
+//   throw new Error("Package purchase failed after multiple attempts.");
+// }
 async function buyPackage(
   functionName: string,
   packageIndex: bigint,
@@ -440,105 +676,106 @@ async function buyPackage(
       console.log(`=== PACKAGE PURCHASE: ${functionName} ===`);
       console.log(`Account: ${account}, Attempt: ${attempt}`);
 
-      // Step 1: Get package price and check balance
-      const packagePrice = await context.getPackagePrice(packageIndex);
-      const balance = await context.getUSDCBalance(account);
+      // Step 1: Check user registration
+      const userRecord = await context.getUserRecord(account);
+      if (!userRecord.isRegistered) {
+        throw new Error("User must be registered before purchasing a package.");
+      }
 
-      console.log(`Package price: ${formatUnits(packagePrice, 18)} USDC`);
-      console.log(`User balance: ${formatUnits(balance, 18)} USDC`);
+      // Step 2: Get package price and check balance
+      const packagePrice = await context.getPackagePrice(packageIndex);
+      const balance = await context.getUSDTBalance(account);
+
+      console.log(`Package price: ${formatUnits(packagePrice, 18)} USDT`);
+      console.log(`User balance: ${formatUnits(balance, 18)} USDT`);
 
       if (balance < packagePrice) {
         throw new Error(
-          `Insufficient USDC balance. Available: ${formatUnits(
+          `Insufficient USDT balance. Available: ${formatUnits(
             balance,
             18
-          )} USDC, Required: ${formatUnits(packagePrice, 18)} USDC`
+          )} USDT, Required: ${formatUnits(packagePrice, 18)} USDT`
         );
       }
 
-      // Step 2: ALWAYS check current allowance and request approval if needed
+      // Step 3: Check current allowance and request approval if needed
       const currentAllowance = (await readContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "allowance",
         args: [account, DWC_CONTRACT_ADDRESS],
-        chainId: TESTNET_CHAIN_ID,
+        chainId: MAINNET_CHAIN_ID,
       })) as bigint;
 
       console.log(
-        `Current allowance: ${formatUnits(currentAllowance, 18)} USDC`
+        `Current allowance: ${formatUnits(currentAllowance, 18)} USDT`
       );
-      console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDC`);
+      console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDT`);
 
-      // Step 3: Request approval if insufficient allowance
       if (currentAllowance < packagePrice) {
         console.log(
-          `🔐 REQUESTING USDC APPROVAL: ${formatUnits(packagePrice, 18)} USDC`
+          `🔐 REQUESTING USDT APPROVAL: ${formatUnits(packagePrice, 18)} USDT`
         );
         console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
 
-        try {
-          // Use a higher approval amount to avoid frequent re-approvals
-          const approvalAmount = packagePrice * 2n; // Approve 2x the package price
-
-          const approvalTx = await writeContract(config, {
+        // Reset allowance to 0 if necessary
+        if (currentAllowance > 0n) {
+          console.log("Resetting USDT allowance to 0 first...");
+          const resetTx = await writeContract(config, {
             abi: USDC_ABI,
             address: USDC_CONTRACT_ADDRESS,
             functionName: "approve",
-            args: [DWC_CONTRACT_ADDRESS, approvalAmount],
-            chain: bscTestnet,
-            account: account,
+            args: [DWC_CONTRACT_ADDRESS, 0n],
+            chain: bsc,
+            account,
           });
-
-          console.log(`Approval transaction submitted: ${approvalTx}`);
-
-          // Wait for approval confirmation
-          const approvalReceipt = await waitForTransactionReceipt(config, {
-            hash: approvalTx,
-            chainId: TESTNET_CHAIN_ID,
+          await waitForTransactionReceipt(config, {
+            hash: resetTx as `0x${string}`,
+            chainId: MAINNET_CHAIN_ID,
           });
+          console.log("Allowance reset to 0");
+        }
 
-          if (approvalReceipt.status === "reverted") {
-            throw new Error("USDC approval transaction failed");
-          }
+        // Approve new amount
+        const approvalAmount = packagePrice * 2n;
+        const approvalTx = await writeContract(config, {
+          abi: USDC_ABI,
+          address: USDC_CONTRACT_ADDRESS,
+          functionName: "approve",
+          args: [DWC_CONTRACT_ADDRESS, approvalAmount],
+          chain: bsc,
+          account,
+        });
 
-          console.log("✅ USDC approval confirmed");
+        console.log(`Approval transaction submitted: ${approvalTx}`);
 
-          // Verify the approval was successful
-          const newAllowance = (await readContract(config, {
-            abi: USDC_ABI,
-            address: USDC_CONTRACT_ADDRESS,
-            functionName: "allowance",
-            args: [account, DWC_CONTRACT_ADDRESS],
-            chainId: TESTNET_CHAIN_ID,
-          })) as bigint;
+        const approvalReceipt = await waitForTransactionReceipt(config, {
+          hash: approvalTx as `0x${string}`,
+          chainId: MAINNET_CHAIN_ID,
+        });
 
-          console.log(
-            `New allowance after approval: ${formatUnits(
-              newAllowance,
-              18
-            )} USDC`
-          );
+        if (approvalReceipt.status === "reverted") {
+          throw new Error("USDT approval transaction failed");
+        }
 
-          if (newAllowance < packagePrice) {
-            throw new Error(
-              "Approval verification failed - insufficient allowance after approval"
-            );
-          }
-        } catch (approvalError: any) {
-          console.error("Approval failed:", approvalError);
-          if (
-            approvalError.message?.includes("User rejected") ||
-            approvalError.message?.includes("cancelled")
-          ) {
-            throw new Error(
-              "USDC approval was cancelled by user. Package purchase cannot proceed without approval."
-            );
-          }
+        console.log("✅ USDT approval confirmed");
+
+        // Verify the approval
+        const newAllowance = (await readContract(config, {
+          abi: USDC_ABI,
+          address: USDC_CONTRACT_ADDRESS,
+          functionName: "allowance",
+          args: [account, DWC_CONTRACT_ADDRESS],
+          chainId: MAINNET_CHAIN_ID,
+        })) as bigint;
+
+        console.log(
+          `New allowance after approval: ${formatUnits(newAllowance, 18)} USDT`
+        );
+
+        if (newAllowance < packagePrice) {
           throw new Error(
-            `USDC approval failed: ${
-              approvalError.message || "Unknown approval error"
-            }`
+            "Approval verification failed - insufficient allowance after approval"
           );
         }
       } else {
@@ -553,7 +790,7 @@ async function buyPackage(
         address: DWC_CONTRACT_ADDRESS,
         functionName,
         args: [],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         maxFeePerGas: parseUnits("10", 9),
         maxPriorityFeePerGas: parseUnits("5", 9),
@@ -564,7 +801,7 @@ async function buyPackage(
       // Step 5: Wait for purchase confirmation
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: TESTNET_CHAIN_ID,
+        chainId: MAINNET_CHAIN_ID,
       });
 
       if (receipt.status === "reverted") {
@@ -578,7 +815,6 @@ async function buyPackage(
     } catch (error: any) {
       console.error(`❌ Purchase attempt ${attempt} failed:`, error);
 
-      // Handle specific errors
       if (
         error.message?.includes("User rejected") ||
         error.message?.includes("cancelled")
@@ -592,15 +828,14 @@ async function buyPackage(
         );
       }
 
-      if (error.message?.includes("Insufficient USDC balance")) {
-        throw error; // Re-throw balance errors immediately
+      if (error.message?.includes("Insufficient USDT balance")) {
+        throw error;
       }
 
       if (error.message?.includes("approval")) {
-        throw error; // Re-throw approval errors immediately
+        throw error;
       }
 
-      // Handle contract errors
       if (error.cause?.data) {
         try {
           const decodedError = decodeErrorResult({
@@ -611,7 +846,7 @@ async function buyPackage(
 
           if (decodedError.errorName?.includes("User has no existence")) {
             throw new Error(
-              "Registration issue detected. Please try refreshing the page."
+              "User not registered. Please register before purchasing a package."
             );
           }
 
@@ -625,14 +860,12 @@ async function buyPackage(
         }
       }
 
-      // If this is the last attempt, throw the error
       if (attempt === maxRetries) {
         throw new Error(
           `Package purchase failed: ${error.message || "Unknown error"}`
         );
       }
 
-      // Wait before retry
       console.log(`Retrying in 2 seconds...`);
       await new Promise((resolve) => setTimeout(resolve, 2000));
       attempt++;
@@ -641,7 +874,6 @@ async function buyPackage(
 
   throw new Error("Package purchase failed after multiple attempts.");
 }
-
 // Contract interaction functions
 export const dwcContractInteractions: DWCContractInteractions = {
   async approveUSDC(amount: bigint, account: Address): Promise<`0x${string}`> {
@@ -687,7 +919,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
             address: USDC_CONTRACT_ADDRESS,
             functionName: "approve",
             args: [DWC_CONTRACT_ADDRESS, 0n],
-            chain: bscTestnet,
+            chain: bsc,
             account,
           });
 
@@ -704,7 +936,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: USDC_CONTRACT_ADDRESS,
           functionName: "approve",
           args: [DWC_CONTRACT_ADDRESS, amount],
-          chain: bscTestnet,
+          chain: bsc,
           account,
         });
 
@@ -806,7 +1038,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: DWC_CONTRACT_ADDRESS,
           functionName: "registration",
           args: [referrer],
-          chain: bscTestnet,
+          chain: bsc,
           account,
           // maxFeePerGas: parseUnits('5', 9),
           // maxPriorityFeePerGas: parseUnits('2', 9),
@@ -816,7 +1048,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: DWC_CONTRACT_ADDRESS,
           functionName: "registration",
           args: [referrer],
-          chain: bscTestnet,
+          chain: bsc,
           account,
           // gas: gasEstimate * 120n / 100n, // Add 20% buffer
           // maxFeePerGas: parseUnits('5', 9),
@@ -930,7 +1162,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: DWC_CONTRACT_ADDRESS,
           functionName: "withdraw",
           args: [index],
-          chain: bscTestnet,
+          chain: bsc,
           account,
           maxFeePerGas: parseUnits("10", 9), // Increased gas price
           maxPriorityFeePerGas: parseUnits("5", 9), // Increased priority fee
@@ -1036,7 +1268,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           account
         );
         await waitForTransactionReceipt(config, {
-          hash: approvalTx,
+          hash: approvalTx as `0x${string}`,
           chainId: TESTNET_CHAIN_ID,
         });
       }
@@ -1045,7 +1277,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "liquidity",
         args: [amount],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1055,7 +1287,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "liquidity",
         args: [amount],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1090,7 +1322,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "changeDirectPercentage",
         args: [directIncome],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1100,7 +1332,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "changeDirectPercentage",
         args: [directIncome],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1138,7 +1370,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "transferOwnership",
         args: [newOwner],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1148,7 +1380,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "transferOwnership",
         args: [newOwner],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1180,7 +1412,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "renounceOwnership",
         args: [],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1190,7 +1422,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "renounceOwnership",
         args: [],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1228,7 +1460,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "updateRoiPercent",
         args: [index, newPercent],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1238,7 +1470,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "updateRoiPercent",
         args: [index, newPercent],
-        chain: bscTestnet,
+        chain: bsc,
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1317,7 +1549,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
   //     throw error;
   //   }
   // },
-async getUserRecord(user: Address): Promise<UserRecord> {
+  async getUserRecord(user: Address): Promise<UserRecord> {
     try {
       const [
         totalInvestment,
@@ -1335,8 +1567,9 @@ async getUserRecord(user: Address): Promise<UserRecord> {
         chainId: TESTNET_CHAIN_ID,
       })) as [bigint, bigint, Address, bigint, bigint, boolean, bigint];
 
-      if (totalInvestment === undefined || directBusiness === undefined) { // Example check; extend as needed
-        throw new Error('Undefined fields in userRecord response');
+      if (totalInvestment === undefined || directBusiness === undefined) {
+        // Example check; extend as needed
+        throw new Error("Undefined fields in userRecord response");
       }
 
       console.log(`User record for ${user}:`, {
@@ -1385,23 +1618,19 @@ async getUserRecord(user: Address): Promise<UserRecord> {
   //     throw error;
   //   }
   // },
-async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
+  async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
     try {
-      const [
-        packageIndex,
-        lasClaimTime,
-        rewardClaimed,
-        maxRoi,
-      ] = (await readContract(config, {
-        abi: DWC_ABI,
-        address: DWC_CONTRACT_ADDRESS,
-        functionName: "stakeRecord",
-        args: [user, index],
-        chainId: TESTNET_CHAIN_ID,
-      })) as [bigint, bigint, bigint, bigint];
+      const [packageIndex, lasClaimTime, rewardClaimed, maxRoi] =
+        (await readContract(config, {
+          abi: DWC_ABI,
+          address: DWC_CONTRACT_ADDRESS,
+          functionName: "stakeRecord",
+          args: [user, index],
+          chainId: TESTNET_CHAIN_ID,
+        })) as [bigint, bigint, bigint, bigint];
 
       if (packageIndex === undefined) {
-        throw new Error('Undefined response from stakeRecord');
+        throw new Error("Undefined response from stakeRecord");
       }
 
       console.log(`Stake record for ${user} at index ${index}:`, {
@@ -1610,6 +1839,80 @@ async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
       throw error;
     }
   },
+
+  async getAllStakeReward(): Promise<bigint> {
+    try {
+      const reward = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "getallstakereward",
+        chainId: TESTNET_CHAIN_ID,
+      })) as bigint;
+      console.log(`All stake reward: ${formatUnits(reward, 18)} USDC`);
+      return reward;
+    } catch (error: any) {
+      console.error(
+        `Error fetching all stake reward: ${error.message || error}`
+      );
+      throw error;
+    }
+  },
+    async getUSDTBalance(account: Address): Promise<bigint> {
+    try {
+      console.log(`Fetching USDT balance for account: ${account}`);
+      const balance = (await readContract(config, {
+        abi: USDC_ABI,
+        address: USDC_CONTRACT_ADDRESS,
+        functionName: "balanceOf",
+        args: [account],
+        chainId: MAINNET_CHAIN_ID,
+      })) as bigint;
+      console.log(
+        `USDT balance for ${account}: ${formatUnits(balance, 18)} USDT`
+      );
+      return balance;
+    } catch (error: any) {
+      console.error(
+        `Error fetching USDT balance for ${account}: ${error.message || error}`
+      );
+      throw new Error(
+        `Failed to fetch USDT balance: ${error.message || "Unknown error"}`
+      );
+    }
+  },
+
+  // async getUserReferrers(user: Address): Promise<bigint> {
+  //   try {
+  //     const [, count] = (await readContract(config, {
+  //       abi: DWC_ABI,
+  //       address: DWC_CONTRACT_ADDRESS,
+  //       functionName: "getUserReferrers",
+  //       args: [user],
+  //       chainId: TESTNET_CHAIN_ID,
+  //     })) as [Address[], bigint];
+  //     console.log(`User referrers count for ${user}: ${count}`);
+  //     return count;
+  //   } catch (error: any) {
+  //     console.error(`Error fetching user referrers: ${error.message || error}`);
+  //     throw error;
+  //   }
+  // },
+  async getUserReferrers(user: Address): Promise<bigint> {
+    try {
+      const [, count] = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "getUserReferrers",
+        args: [user],
+        chainId: MAINNET_CHAIN_ID,
+      })) as [Address[], bigint];
+      console.log(`User referrers count for ${user}: ${count}`);
+      return count;
+    } catch (error: any) {
+      console.error(`Error fetching user referrers: ${error.message || error}`);
+      throw error;
+    }
+  },
 };
 
 // Export individual functions for convenience
@@ -1651,4 +1954,7 @@ export const {
   calculateClaimAble,
   getContractBalance,
   getUsersLength,
+  getAllStakeReward,
+  getUserReferrers,
+  getUSDTBalance,
 } = dwcContractInteractions;

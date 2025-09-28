@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Card,
@@ -12,12 +11,12 @@ import {
 } from '@mui/material';
 import DiamondIcon from '@mui/icons-material/Diamond';
 import { formatUnits } from 'viem';
-import { TESTNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
+import { MAINNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { config } from '../config/web3modal';
 
 const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, setError, setSuccess, setIsLoading, wallet, chainId, switchChain, fetchMlmData }) => {
-  const [selectedPackage, setSelectedPackage] = useState(0); // Array index (0-based, maps to package index 1)
+  const [selectedPackage, setSelectedPackage] = useState(0); // Array index (0-based, maps to package index)
 
   const handleBuyPackage = async () => {
     console.log('=== PACKAGE PURCHASE DEBUG INFO ===');
@@ -32,15 +31,14 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
       setError('Please connect your wallet to buy package.');
       return;
     }
-
-    if (chainId !== TESTNET_CHAIN_ID) {
+    if (chainId !== MAINNET_CHAIN_ID) {
       try {
-        console.log('Switching chain to BSC Testnet...');
-        await switchChain({ chainId: TESTNET_CHAIN_ID });
+        console.log('Switching chain to BSC Mainnet...');
+        await switchChain({ chainId: MAINNET_CHAIN_ID });
         console.log('Chain switched successfully.');
       } catch (error) {
         console.error('Error switching chain:', error);
-        setError('Please switch to BSC Testnet.');
+        setError('Please switch to BSC Mainnet.');
         return;
       }
     }
@@ -61,15 +59,15 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
         return;
       }
 
-      setSuccess(`Preparing to purchase ${packageInfo.name} for $${packageDetail.price} USDC...`);
+      setSuccess(`Preparing to purchase ${packageInfo.name} for $${packageDetail.price} USDT...`);
 
-      const balance = await dwcContractInteractions.getUSDCBalance(wallet.account);
+      const balance = await dwcContractInteractions.getUSDTBalance(wallet.account);
       const balanceFormatted = parseFloat(formatUnits(balance, 18));
 
-      console.log(`USDC Balance: ${balanceFormatted}, Required: ${packageDetail.price}`);
+      console.log(`USDT Balance: ${balanceFormatted}, Required: ${packageDetail.price}`);
 
       if (balanceFormatted < packageDetail.price) {
-        setError(`Insufficient USDC balance. You have $${balanceFormatted.toFixed(2)} USDC but need $${packageDetail.price} USDC.`);
+        setError(`Insufficient USDT balance. You have $${balanceFormatted.toFixed(2)} USDT but need $${packageDetail.price} USDT.`);
         return;
       }
 
@@ -88,9 +86,9 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
       console.log('Transaction hash received:', txHash);
 
       setSuccess('Transaction submitted! Waiting for confirmation...');
-      await waitForTransactionReceipt(config, { hash: txHash, chainId: TESTNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { hash: txHash, chainId: MAINNET_CHAIN_ID });
 
-      setSuccess(`Successfully purchased ${packageInfo.name} for $${packageDetail.price} USDC! Transaction: ${txHash}`);
+      setSuccess(`Successfully purchased ${packageInfo.name} for $${packageDetail.price} USDT! Transaction: ${txHash}`);
 
       setTimeout(fetchMlmData, 2000);
     } catch (error) {
@@ -100,7 +98,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
         setError('Transaction was cancelled by user');
       } else if (error.message?.includes('Insufficient BNB') || error.message?.includes('insufficient funds')) {
         setError('Insufficient BNB for gas fees. Please add BNB to your wallet.');
-      } else if (error.message?.includes('Insufficient USDC balance')) {
+      } else if (error.message?.includes('Insufficient USDT balance')) {
         setError(error.message);
       } else if (error.message?.includes('Registration issue') || error.message?.includes('not registered')) {
         setError('Registration issue detected. Please try refreshing the page or re-registering.');
@@ -139,7 +137,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                     <Typography>{pkg.name}</Typography>
                     <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
-                      ${pkg.price} USDC
+                      ${pkg.price} USDT
                     </Typography>
                   </Box>
                 </MenuItem>
@@ -154,7 +152,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-                  Price: ${packageDetails[selectedPackage].price} USDC
+                  Price: ${packageDetails[selectedPackage].price} USDT
                 </Typography>
                 <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main' }}>
                   ROI: {packageDetails[selectedPackage].roiPercent}%
@@ -185,16 +183,16 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
             variant="contained"
             startIcon={<DiamondIcon />}
             onClick={handleBuyPackage}
-            color=''
+            color=""
             disabled={isLoading || packageDetails.length === 0}
             sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
           >
             {packageDetails.length > 0 && packageDetails[selectedPackage]
-              ? `Buy ${packageDetails[selectedPackage].name} - $${packageDetails[selectedPackage].price} USDC`
+              ? `Buy ${packageDetails[selectedPackage].name} - $${packageDetails[selectedPackage].price} USDT`
               : 'Buy Selected Package'}
           </Button>
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-            USDC approval will be handled automatically. Ensure you have sufficient USDC balance and BNB for gas fees.
+            USDT approval will be handled automatically. Ensure you have sufficient USDT balance and BNB for gas fees.
           </Typography>
         </Box>
       )}

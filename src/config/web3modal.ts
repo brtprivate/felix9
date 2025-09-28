@@ -1,17 +1,17 @@
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
-import { bscTestnet } from 'wagmi/chains';
+import { bsc } from 'wagmi/chains';
 import { NETWORK_CONFIG } from '../config';
 
 const projectId = 'b0cebcda95846f0aabc833a9f05dca99';
 const metadata = {
-  name: 'safemin MLM',
-  description: 'safemin MLM Platform',
-  url: 'https://bdcstack.com/',
-  icons: ['https://bdcstack.com/favicon.ico']
+  name: 'felix9',
+  description: 'Platform',
+  url: 'https://felix9.io/',
+  icons: ['https://felix9.io/favicon.ico']
 };
 
 const bscChain = {
-  ...bscTestnet,
+  ...bsc,
   rpcUrls: {
     default: {
       http: [NETWORK_CONFIG.rpcUrl],
@@ -46,6 +46,6 @@ createWeb3Modal({
     '--w3m-accent': '#FFA000',
     '--w3m-border-radius-master': '12px'
   },
-  // Default to BSC Testnet for production
+  // Default to BSC Mainnet for production
   defaultChain: bscChain
 });
