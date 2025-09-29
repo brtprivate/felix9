@@ -792,8 +792,8 @@ async function buyPackage(
         args: [],
         chain: bsc,
         account,
-        maxFeePerGas: parseUnits("10", 9),
-        maxPriorityFeePerGas: parseUnits("5", 9),
+        // maxFeePerGas: parseUnits("10", 9),
+        // maxPriorityFeePerGas: parseUnits("5", 9),
       });
 
       console.log(`Package purchase transaction submitted: ${txHash}`);

@@ -183,7 +183,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
             variant="contained"
             startIcon={<DiamondIcon />}
             onClick={handleBuyPackage}
-            color=""
+            color="green"
             disabled={isLoading || packageDetails.length === 0}
             sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
           >
