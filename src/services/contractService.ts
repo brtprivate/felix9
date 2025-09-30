@@ -19,7 +19,7 @@ export { USDC_ABI };
 
 // Contract configuration - BSC Testnet
 export const DWC_CONTRACT_ADDRESS =
-  "0x1cB6984E1A61416AEaf8Aa1787cbE116Ea10b11b" as Address;
+  "0x1504e18Bf6eF5513A7ca065e2DD1Daba27AFF068" as Address;
 export const MAINNET_CHAIN_ID = 56;
 export const TESTNET_CHAIN_ID = MAINNET_CHAIN_ID;
 
@@ -1857,7 +1857,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       throw error;
     }
   },
-    async getUSDTBalance(account: Address): Promise<bigint> {
+  async getUSDTBalance(account: Address): Promise<bigint> {
     try {
       console.log(`Fetching USDT balance for account: ${account}`);
       const balance = (await readContract(config, {
