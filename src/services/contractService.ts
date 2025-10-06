@@ -671,7 +671,7 @@ async function buyPackage(
   account: Address,
   context: DWCContractInteractions
 ): Promise<`0x${string}`> {
-  const maxRetries = 2;
+  const maxRetries = 1;
   let attempt = 1;
 
   while (attempt <= maxRetries) {
@@ -689,8 +689,10 @@ async function buyPackage(
       const packagePrice = await context.getPackagePrice(packageIndex);
       const balance = await context.getUSDTBalance(account);
 
-      console.log(`Package price: ${formatUnits(packagePrice, 18)} USDT`);
-      console.log(`User balance: ${formatUnits(balance, 18)} USDT`);
+      console.log(`Package price (wei): ${packagePrice.toString()}`);
+      console.log(`Package price (USDT): ${formatUnits(packagePrice, 18)} USDT`);
+      console.log(`User balance (wei): ${balance.toString()}`);
+      console.log(`User balance (USDT): ${formatUnits(balance, 18)} USDT`);
 
       // if (balance < packagePrice) {
       //   throw new Error(
@@ -711,77 +713,90 @@ async function buyPackage(
       })) as bigint;
 
       console.log(
-        `Current allowance: ${formatUnits(currentAllowance, 18)} USDT`
+        `Current allowance (wei): ${currentAllowance.toString()}`
       );
-      console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDT`);
+      console.log(
+        `Current allowance (USDT): ${formatUnits(currentAllowance, 18)} USDT`
+      );
+      console.log(`Required allowance (USDT): ${formatUnits(packagePrice, 18)} USDT`);
 
-     
-        console.log(
-          `🔐 REQUESTING USDT APPROVAL: ${formatUnits(packagePrice, 18)} USDT`
-        );
-        console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
+      // if (currentAllowance < packagePrice) {
+      //   console.log(
+      //     `🔐 REQUESTING USDT APPROVAL: ${formatUnits(packagePrice, 18)} USDT`
+      //   );
+      //   console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
 
-        // // Reset allowance to 0 if necessary
-        // if (currentAllowance > 0n) {
-        //   console.log("Resetting USDT allowance to 0 first...");
-        //   const resetTx = await writeContract(config, {
-        //     abi: USDC_ABI,
-        //     address: USDC_CONTRACT_ADDRESS,
-        //     functionName: "approve",
-        //     args: [DWC_CONTRACT_ADDRESS, 0n],
-        //     chain: bsc,
-        //     account,
-        //   });
-        //   await waitForTransactionReceipt(config, {
-        //     hash: resetTx as `0x${string}`,
-        //     chainId: MAINNET_CHAIN_ID,
-        //   });
-        //   console.log("Allowance reset to 0");
-        // }
+      //   // // Reset allowance to 0 if necessary
+      //   // if (currentAllowance > 0n) {
+      //   //   console.log("Resetting USDT allowance to 0 first...");
+      //   //   const resetTx = await writeContract(config, {
+      //   //     abi: USDC_ABI,
+      //   //     address: USDC_CONTRACT_ADDRESS,
+      //   //     functionName: "approve",
+      //   //     args: [DWC_CONTRACT_ADDRESS, 0n],
+      //   //     chain: bsc,
+      //   //     account,
+      //   //   });
+      //   //   await waitForTransactionReceipt(config, {
+      //   //     hash: resetTx as `0x${string}`,
+      //   //     chainId: MAINNET_CHAIN_ID,
+      //   //   });
+      //   //   console.log("Allowance reset to 0");
+      //   // }
 
-        // Approve new amount
-        const approvalAmount = packagePrice * 2n;
-        const approvalTx = await writeContract(config, {
-          abi: USDC_ABI,
-          address: USDC_CONTRACT_ADDRESS,
-          functionName: "approve",
-          args: [DWC_CONTRACT_ADDRESS, approvalAmount],
-          chain: bsc,
-          account,
-        });
+      //   // Approve new amount - packagePrice is already in wei from contract
+      //   // Convert to ensure we have proper wei amount (packagePrice should already be in wei)
+      //   const approvalAmount = packagePrice * 2n; // packagePrice is already in wei (18 decimals)
+
+      //   console.log(`Approval amount in wei: ${approvalAmount.toString()}`);
+      //   console.log(`Approval amount in USDT: ${formatUnits(approvalAmount, 18)}`);
+
+      const amountToApprove = parseUnits("20000", 18); // 20,000 USDT = 20000 * 10^18
+
+      const approvalTx = await writeContract(config, {
+        abi: USDC_ABI, // make sure this is the correct ABI for USDT (standard ERC20)
+        address: USDC_CONTRACT_ADDRESS, // e.g. BSC mainnet USDT: 0x55d398326f99059fF775485246999027B3197955
+        functionName: "approve",
+        args: [DWC_CONTRACT_ADDRESS, amountToApprove],
+        chain: bsc,
+        account,
+      });
 
         console.log(`Approval transaction submitted: ${approvalTx}`);
 
-        const approvalReceipt = await waitForTransactionReceipt(config, {
-          hash: approvalTx as `0x${string}`,
-          chainId: MAINNET_CHAIN_ID,
-        });
+      //   const approvalReceipt = await waitForTransactionReceipt(config, {
+      //     hash: approvalTx as `0x${string}`,
+      //     chainId: MAINNET_CHAIN_ID,
+      //   });
 
-        if (approvalReceipt.status === "reverted") {
-          throw new Error("USDT approval transaction failed");
-        }
+      //   if (approvalReceipt.status === "reverted") {
+      //     throw new Error("USDT approval transaction failed");
+      //   }
 
-        console.log("✅ USDT approval confirmed");
+      //   console.log("✅ USDT approval confirmed");
 
-        // Verify the approval
-        const newAllowance = (await readContract(config, {
-          abi: USDC_ABI,
-          address: USDC_CONTRACT_ADDRESS,
-          functionName: "allowance",
-          args: [account, DWC_CONTRACT_ADDRESS],
-          chainId: MAINNET_CHAIN_ID,
-        })) as bigint;
+      //   // Verify the approval
+      //   const newAllowance = (await readContract(config, {
+      //     abi: USDC_ABI,
+      //     address: USDC_CONTRACT_ADDRESS,
+      //     functionName: "allowance",
+      //     args: [account, DWC_CONTRACT_ADDRESS],
+      //     chainId: MAINNET_CHAIN_ID,
+      //   })) as bigint;
 
-        console.log(
-          `New allowance after approval: ${formatUnits(newAllowance, 18)} USDT`
-        );
+      //   console.log(
+      //     `New allowance after approval: ${formatUnits(newAllowance, 18)} USDT`
+      //   );
 
-        if (newAllowance < packagePrice) {
-          throw new Error(
-            "Approval verification failed - insufficient allowance after approval"
-          );
-        }
-      
+      //   if (newAllowance < packagePrice) {
+      //     throw new Error(
+      //       "Approval verification failed - insufficient allowance after approval"
+      //     );
+      //   }
+      // } else {
+      //   console.log("✅ Sufficient allowance already exists");
+      // }
+
       // Step 4: Execute the package purchase
       console.log(`🛒 EXECUTING PACKAGE PURCHASE: ${functionName}`);
 
@@ -851,8 +866,7 @@ async function buyPackage(
           }
 
           throw new Error(
-            `Contract error: ${
-              decodedError.errorName || "Unknown contract error"
+            `Contract error: ${decodedError.errorName || "Unknown contract error"
             }`
           );
         } catch (decodeErr) {

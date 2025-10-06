@@ -9,6 +9,7 @@ import { readContract, writeContract } from "@wagmi/core";
 import { config } from "../config/web3modal";
 import type { Address } from "viem";
 import { bsc } from "wagmi/chains";
+
 // https://bscscan.com/address/0x55d398326f99059fF775485246999027B3197955#writeContract
 // USDT Contract configuration - BSC Mainnet
 export const USDT_CONTRACT_ADDRESS =
@@ -358,7 +359,7 @@ export const usdcContractInteractions = {
     account: Address
   ): Promise<string> {
     try {
-      console.log(`Approving ${amount} USDC for ${spender}`);
+      console.log(`Approving ${amount.toString()} wei USDT for ${spender}`);
 
       const txHash = await writeContract(config, {
         abi: USDC_ABI,
@@ -369,12 +370,12 @@ export const usdcContractInteractions = {
         account: account,
       });
 
-      console.log("USDC approval transaction hash:", txHash);
+      console.log("USDT approval transaction hash:", txHash);
       return txHash;
     } catch (error: any) {
-      console.error(`Error approving USDC: ${error.message || error}`);
+      console.error(`Error approving USDT: ${error.message || error}`);
       throw new Error(
-        `Failed to approve USDC: ${error.message || "Unknown error"}`
+        `Failed to approve USDT: ${error.message || "Unknown error"}`
       );
     }
   },
