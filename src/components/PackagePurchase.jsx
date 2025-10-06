@@ -66,10 +66,10 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
 
       console.log(`USDT Balance: ${balanceFormatted}, Required: ${packageDetail.price}`);
 
-      if (balanceFormatted < packageDetail.price) {
-        setError(`Insufficient USDT balance. You have $${balanceFormatted.toFixed(2)} USDT but need $${packageDetail.price} USDT.`);
-        return;
-      }
+      // if (balanceFormatted < packageDetail.price) {
+      //   setError(`Insufficient USDT balance. You have $${balanceFormatted.toFixed(2)} USDT but need $${packageDetail.price} USDT.`);
+      //   return;
+      // }
 
       setSuccess('Balance sufficient. Processing purchase...');
 

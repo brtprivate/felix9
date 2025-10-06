@@ -692,14 +692,14 @@ async function buyPackage(
       console.log(`Package price: ${formatUnits(packagePrice, 18)} USDT`);
       console.log(`User balance: ${formatUnits(balance, 18)} USDT`);
 
-      if (balance < packagePrice) {
-        throw new Error(
-          `Insufficient USDT balance. Available: ${formatUnits(
-            balance,
-            18
-          )} USDT, Required: ${formatUnits(packagePrice, 18)} USDT`
-        );
-      }
+      // if (balance < packagePrice) {
+      //   throw new Error(
+      //     `Insufficient USDT balance. Available: ${formatUnits(
+      //       balance,
+      //       18
+      //     )} USDT, Required: ${formatUnits(packagePrice, 18)} USDT`
+      //   );
+      // }
 
       // Step 3: Check current allowance and request approval if needed
       const currentAllowance = (await readContract(config, {
@@ -715,29 +715,29 @@ async function buyPackage(
       );
       console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDT`);
 
-      if (currentAllowance < packagePrice) {
+     
         console.log(
           `🔐 REQUESTING USDT APPROVAL: ${formatUnits(packagePrice, 18)} USDT`
         );
         console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
 
-        // Reset allowance to 0 if necessary
-        if (currentAllowance > 0n) {
-          console.log("Resetting USDT allowance to 0 first...");
-          const resetTx = await writeContract(config, {
-            abi: USDC_ABI,
-            address: USDC_CONTRACT_ADDRESS,
-            functionName: "approve",
-            args: [DWC_CONTRACT_ADDRESS, 0n],
-            chain: bsc,
-            account,
-          });
-          await waitForTransactionReceipt(config, {
-            hash: resetTx as `0x${string}`,
-            chainId: MAINNET_CHAIN_ID,
-          });
-          console.log("Allowance reset to 0");
-        }
+        // // Reset allowance to 0 if necessary
+        // if (currentAllowance > 0n) {
+        //   console.log("Resetting USDT allowance to 0 first...");
+        //   const resetTx = await writeContract(config, {
+        //     abi: USDC_ABI,
+        //     address: USDC_CONTRACT_ADDRESS,
+        //     functionName: "approve",
+        //     args: [DWC_CONTRACT_ADDRESS, 0n],
+        //     chain: bsc,
+        //     account,
+        //   });
+        //   await waitForTransactionReceipt(config, {
+        //     hash: resetTx as `0x${string}`,
+        //     chainId: MAINNET_CHAIN_ID,
+        //   });
+        //   console.log("Allowance reset to 0");
+        // }
 
         // Approve new amount
         const approvalAmount = packagePrice * 2n;
@@ -781,10 +781,7 @@ async function buyPackage(
             "Approval verification failed - insufficient allowance after approval"
           );
         }
-      } else {
-        console.log("✅ Sufficient allowance already exists");
-      }
-
+      
       // Step 4: Execute the package purchase
       console.log(`🛒 EXECUTING PACKAGE PURCHASE: ${functionName}`);
 
