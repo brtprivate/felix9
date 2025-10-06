@@ -6,7 +6,7 @@ import {
   dwcContractInteractions,
   DWC_CONTRACT_ADDRESS,
   DWC_ABI,
-  TESTNET_CHAIN_ID
+  MAINNET_CHAIN_ID
 } from '../services/contractService';
 import { formatUnits } from 'viem';
 
@@ -34,7 +34,7 @@ export const MLMProvider: React.FC<MLMProviderProps> = ({ children }) => {
   const { address, isConnected, chain } = useAccount();
   const [isMLMRegistered, setIsMLMRegistered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const isCorrectNetwork = chain?.id === TESTNET_CHAIN_ID;
+  const isCorrectNetwork = chain?.id === MAINNET_CHAIN_ID;
 
   const checkMLMRegistration = async (): Promise<boolean> => {
     if (!address || !isCorrectNetwork) {
