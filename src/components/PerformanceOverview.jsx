@@ -209,7 +209,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        {/* <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
@@ -226,8 +226,8 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} sm={6} md={4}>
+        </Grid> */}
+        {/* <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
@@ -244,7 +244,7 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
               </Typography>
             </CardContent>
           </Card>
-        </Grid>
+        </Grid> */}
         <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
