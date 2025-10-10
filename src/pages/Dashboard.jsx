@@ -60,12 +60,16 @@ const Dashboard = () => {
       const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7'; // fallback referrer
       const registerTx = await dwcContractInteractions.registration(refCode, wallet.account);
 
-      await waitForTransactionReceipt(config, { hash: registerTx, chainId: MAINNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { 
+        hash: registerTx, 
+        chainId: MAINNET_CHAIN_ID,
+        confirmations: 2 
+      });
 
       setSuccess(`Registration successful! Transaction: ${registerTx}`);
       setReferralCode('');
       setShowReferralInput(false);
-      setTimeout(fetchMlmData, 3000);
+      setTimeout(() => fetchMlmData(), 1000);
     } catch (error) {
       console.error('Error registering user:', error);
       if (error.message?.includes('User rejected')) {
@@ -115,16 +119,20 @@ const Dashboard = () => {
         return;
       }
 
-      setSuccess(`Initiating withdrawal of $${stakeToWithdraw.claimable.toFixed(4)} USDC...`);
+      setSuccess(`Initiating withdrawal of ${stakeToWithdraw.claimable.toFixed(4)} USDT...`);
 
       const txHash = await dwcContractInteractions.withdraw(BigInt(index), wallet.account);
 
       setSuccess('Transaction submitted! Waiting for confirmation...');
-      await waitForTransactionReceipt(config, { hash: txHash, chainId: MAINNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { 
+        hash: txHash, 
+        chainId: MAINNET_CHAIN_ID,
+        confirmations: 2 
+      });
 
-      setSuccess(`Successfully withdrawn $${stakeToWithdraw.claimable.toFixed(4)} USDC! Transaction: ${txHash}`);
+      setSuccess(`Successfully withdrawn ${stakeToWithdraw.claimable.toFixed(4)} USDT! Transaction: ${txHash}`);
 
-      setTimeout(fetchMlmData, 2000);
+      setTimeout(() => fetchMlmData(), 1000);
     } catch (error) {
       console.error('=== WITHDRAWAL ERROR ===', error);
 

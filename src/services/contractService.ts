@@ -449,222 +449,6 @@ const formatPercentage = (rawValue: bigint, divider: bigint): string => {
   }
 };
 
-// Helper function for package purchase with mandatory approval
-// async function buyPackage(
-//   functionName: string,
-//   packageIndex: bigint,
-//   account: Address,
-//   context: DWCContractInteractions
-// ): Promise<`0x${string}`> {
-//   const maxRetries = 2;
-//   let attempt = 1;
-
-//   while (attempt <= maxRetries) {
-//     try {
-//       console.log(`=== PACKAGE PURCHASE: ${functionName} ===`);
-//       console.log(`Account: ${account}, Attempt: ${attempt}`);
-
-//       // Step 1: Get package price and check balance
-//       const packagePrice = await context.getPackagePrice(packageIndex);
-//       const balance = await context.getUSDCBalance(account);
-
-//       console.log(`Package price: ${formatUnits(packagePrice, 18)} USDC`);
-//       console.log(`User balance: ${formatUnits(balance, 18)} USDC`);
-
-//       if (balance < packagePrice) {
-//         throw new Error(
-//           `Insufficient USDC balance. Available: ${formatUnits(
-//             balance,
-//             18
-//           )} USDC, Required: ${formatUnits(packagePrice, 18)} USDC`
-//         );
-//       }
-
-//       // Step 2: ALWAYS check current allowance and request approval if needed
-//       const currentAllowance = (await readContract(config, {
-//         abi: USDC_ABI,
-//         address: USDC_CONTRACT_ADDRESS,
-//         functionName: "allowance",
-//         args: [account, DWC_CONTRACT_ADDRESS],
-//         chainId: MAINNET_CHAIN_ID,
-//       })) as bigint;
-
-//       console.log(
-//         `Current allowance: ${formatUnits(currentAllowance, 18)} USDC`
-//       );
-//       console.log(`Required allowance: ${formatUnits(packagePrice, 18)} USDC`);
-
-//       // Step 3: Request approval if insufficient allowance
-//       if (currentAllowance < packagePrice) {
-//         console.log(
-//           `🔐 REQUESTING USDC APPROVAL: ${formatUnits(packagePrice, 18)} USDC`
-//         );
-//         console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
-
-//         try {
-//           // Use a higher approval amount to avoid frequent re-approvals
-//           const approvalAmount = packagePrice * 2n; // Approve 2x the package price
-
-//           const approvalTx = await writeContract(config, {
-//             abi: USDC_ABI,
-//             address: USDC_CONTRACT_ADDRESS,
-//             functionName: "approve",
-//             args: [DWC_CONTRACT_ADDRESS, approvalAmount],
-//             chain: bsc,
-//             account: account,
-//           });
-
-//           console.log(`Approval transaction submitted: ${approvalTx}`);
-
-//           // Wait for approval confirmation
-//           const approvalReceipt = await waitForTransactionReceipt(config, {
-//             hash: approvalTx as `0x${string}`,
-//             chainId: MAINNET_CHAIN_ID,
-//           });
-
-//           if (approvalReceipt.status === "reverted") {
-//             throw new Error("USDC approval transaction failed");
-//           }
-
-//           console.log("✅ USDC approval confirmed");
-
-//           // Verify the approval was successful
-//           const newAllowance = (await readContract(config, {
-//             abi: USDC_ABI,
-//             address: USDC_CONTRACT_ADDRESS,
-//             functionName: "allowance",
-//             args: [account, DWC_CONTRACT_ADDRESS],
-//             chainId: MAINNET_CHAIN_ID,
-//           })) as bigint;
-
-//           console.log(
-//             `New allowance after approval: ${formatUnits(
-//               newAllowance,
-//               18
-//             )} USDC`
-//           );
-
-//           if (newAllowance < packagePrice) {
-//             throw new Error(
-//               "Approval verification failed - insufficient allowance after approval"
-//             );
-//           }
-//         } catch (approvalError: any) {
-//           console.error("Approval failed:", approvalError);
-//           if (
-//             approvalError.message?.includes("User rejected") ||
-//             approvalError.message?.includes("cancelled")
-//           ) {
-//             throw new Error(
-//               "USDC approval was cancelled by user. Package purchase cannot proceed without approval."
-//             );
-//           }
-//           throw new Error(
-//             `USDC approval failed: ${
-//               approvalError.message || "Unknown approval error"
-//             }`
-//           );
-//         }
-//       } else {
-//         console.log("✅ Sufficient allowance already exists");
-//       }
-
-//       // Step 4: Execute the package purchase
-//       console.log(`🛒 EXECUTING PACKAGE PURCHASE: ${functionName}`);
-
-//       const txHash = await writeContract(config, {
-//         abi: DWC_ABI,
-//         address: DWC_CONTRACT_ADDRESS,
-//         functionName,
-//         args: [],
-//         chain: bsc,
-//         account,
-//         maxFeePerGas: parseUnits("10", 9),
-//         maxPriorityFeePerGas: parseUnits("5", 9),
-//       });
-
-//       console.log(`Package purchase transaction submitted: ${txHash}`);
-
-//       // Step 5: Wait for purchase confirmation
-//       const receipt = await waitForTransactionReceipt(config, {
-//         hash: txHash as `0x${string}`,
-//         chainId: MAINNET_CHAIN_ID,
-//       });
-
-//       if (receipt.status === "reverted") {
-//         throw new Error(
-//           "Package purchase transaction reverted by the contract."
-//         );
-//       }
-
-//       console.log(`✅ PACKAGE PURCHASE SUCCESSFUL: ${txHash}`);
-//       return txHash as `0x${string}`;
-//     } catch (error: any) {
-//       console.error(`❌ Purchase attempt ${attempt} failed:`, error);
-
-//       // Handle specific errors
-//       if (
-//         error.message?.includes("User rejected") ||
-//         error.message?.includes("cancelled")
-//       ) {
-//         throw new Error("Transaction was cancelled by user.");
-//       }
-
-//       if (error.message?.includes("insufficient funds")) {
-//         throw new Error(
-//           "Insufficient BNB for gas fees. Please add BNB to your wallet."
-//         );
-//       }
-
-//       if (error.message?.includes("Insufficient USDC balance")) {
-//         throw error; // Re-throw balance errors immediately
-//       }
-
-//       if (error.message?.includes("approval")) {
-//         throw error; // Re-throw approval errors immediately
-//       }
-
-//       // Handle contract errors
-//       if (error.cause?.data) {
-//         try {
-//           const decodedError = decodeErrorResult({
-//             abi: DWC_ABI,
-//             data: error.cause.data,
-//           });
-//           console.log("Decoded contract error:", decodedError);
-
-//           if (decodedError.errorName?.includes("User has no existence")) {
-//             throw new Error(
-//               "Registration issue detected. Please try refreshing the page."
-//             );
-//           }
-
-//           throw new Error(
-//             `Contract error: ${
-//               decodedError.errorName || "Unknown contract error"
-//             }`
-//           );
-//         } catch (decodeErr) {
-//           console.warn("Could not decode error:", decodeErr);
-//         }
-//       }
-
-//       // If this is the last attempt, throw the error
-//       if (attempt === maxRetries) {
-//         throw new Error(
-//           `Package purchase failed: ${error.message || "Unknown error"}`
-//         );
-//       }
-
-//       // Wait before retry
-//       console.log(`Retrying in 2 seconds...`);
-//       await new Promise((resolve) => setTimeout(resolve, 2000));
-//       attempt++;
-//     }
-//   }
-
-//   throw new Error("Package purchase failed after multiple attempts.");
-// }
 async function buyPackage(
   functionName: string,
   packageIndex: bigint,
@@ -690,7 +474,9 @@ async function buyPackage(
       const balance = await context.getUSDTBalance(account);
 
       console.log(`Package price (wei): ${packagePrice.toString()}`);
-      console.log(`Package price (USDT): ${formatUnits(packagePrice, 18)} USDT`);
+      console.log(
+        `Package price (USDT): ${formatUnits(packagePrice, 18)} USDT`
+      );
       console.log(`User balance (wei): ${balance.toString()}`);
       console.log(`User balance (USDT): ${formatUnits(balance, 18)} USDT`);
 
@@ -712,13 +498,13 @@ async function buyPackage(
         chainId: MAINNET_CHAIN_ID,
       })) as bigint;
 
-      console.log(
-        `Current allowance (wei): ${currentAllowance.toString()}`
-      );
+      console.log(`Current allowance (wei): ${currentAllowance.toString()}`);
       console.log(
         `Current allowance (USDT): ${formatUnits(currentAllowance, 18)} USDT`
       );
-      console.log(`Required allowance (USDT): ${formatUnits(packagePrice, 18)} USDT`);
+      console.log(
+        `Required allowance (USDT): ${formatUnits(packagePrice, 18)} USDT`
+      );
 
       // if (currentAllowance < packagePrice) {
       //   console.log(
@@ -762,7 +548,7 @@ async function buyPackage(
         account,
       });
 
-        console.log(`Approval transaction submitted: ${approvalTx}`);
+      console.log(`Approval transaction submitted: ${approvalTx}`);
 
       //   const approvalReceipt = await waitForTransactionReceipt(config, {
       //     hash: approvalTx as `0x${string}`,
@@ -866,7 +652,8 @@ async function buyPackage(
           }
 
           throw new Error(
-            `Contract error: ${decodedError.errorName || "Unknown contract error"
+            `Contract error: ${
+              decodedError.errorName || "Unknown contract error"
             }`
           );
         } catch (decodeErr) {

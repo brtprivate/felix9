@@ -209,42 +209,9 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
             </CardContent>
           </Card>
         </Grid>
-        {/* <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <AccountBalanceWalletIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Contract Balance
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1.25rem' }}>
-                {formatCurrency(mlmData.contractBalance || 0)}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                USDT
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid> */}
-        {/* <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
-            <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <PeopleIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
-                  Total Users
-                </Typography>
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
-                {mlmData.totalUsers || 0}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                Registered
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid> */}
+
+       
+       
         <Grid item xs={12} sm={6} md={4}>
           <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
             <CardContent>
@@ -355,9 +322,10 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                               onClick={() => handleClaimClick(stake.index)}
                               disabled={loadingStakes[stake.index] || stake.claimable <= 0}
                               startIcon={loadingStakes[stake.index] ? <CircularProgress size={16} /> : null}
-                              color=''
+                              color={stake.claimable <= 0 ? 'inherit' : ''}
+                              sx={stake.claimable <= 0 ? { backgroundColor: 'grey.300', color: 'grey.600' } : {}}
                             >
-                              {loadingStakes[stake.index] ? 'Claiming...' : 'Claim'}
+                              {loadingStakes[stake.index] ? 'Claiming...' : stake.claimable <= 0 ? 'No Claim' : 'Claim'}
                             </Button>
                           </span>
                         </Tooltip>
