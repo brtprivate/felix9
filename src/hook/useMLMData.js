@@ -208,10 +208,7 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
               wallet.account,
               BigInt(i)
             );
-            if (!claimable) {
-              console.error(`No claimable amount for stake #${i}`);
-              continue;
-            }
+           
             console.log("🎯 Claimable amount (raw):", claimable.toString());
 
             // Find the package with the adjusted index

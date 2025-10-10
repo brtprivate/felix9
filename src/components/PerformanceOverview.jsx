@@ -57,9 +57,9 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
   const financialMetrics = useMemo(() => {
     const totalClaimed = stakes.reduce((sum, stake) => sum + (stake.rewardClaimed || 0), 0);
     const totalClaimable = stakes.reduce((sum, stake) => sum + (stake.claimable || 0), 0);
-    const totalRewards = totalClaimed + totalClaimable;
+    const totalRewards =mlmData.totalWithdrawn  + totalClaimable;
     const earningLimit = (mlmData.totalInvestment || 0) * 3;
-    const used = totalClaimed + totalClaimable;
+    const used = mlmData.totalWithdrawn + totalClaimable;
     const remaining = Math.max(0, earningLimit - used);
     const percentage = earningLimit > 0 ? Math.min(100, (used / earningLimit) * 100) : 0;
 
