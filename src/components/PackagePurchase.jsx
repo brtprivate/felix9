@@ -183,14 +183,30 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
             variant="contained"
             startIcon={<DiamondIcon />}
             onClick={handleBuyPackage}
-            color="green"
             disabled={isLoading || packageDetails.length === 0}
-            sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}
+            sx={{
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              backgroundColor: '#00C853', // bright green
+              color: '#fff', // white text
+              fontWeight: 'bold',
+              boxShadow: '0 0 12px rgba(0, 200, 83, 0.6)', // glowing green effect
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                backgroundColor: '#00E676',
+                boxShadow: '0 0 18px rgba(0, 230, 118, 0.9)',
+              },
+              '&:disabled': {
+                backgroundColor: '#A5D6A7',
+                color: '#fff',
+                boxShadow: 'none',
+              },
+            }}
           >
             {packageDetails.length > 0 && packageDetails[selectedPackage]
               ? `Buy ${packageDetails[selectedPackage].name} - $${packageDetails[selectedPackage].price} USDT`
               : 'Buy Selected Package'}
           </Button>
+
           <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
             USDT approval will be handled automatically. Ensure you have sufficient USDT balance and BNB for gas fees.
           </Typography>

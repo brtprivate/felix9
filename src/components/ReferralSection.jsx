@@ -28,7 +28,7 @@ const ReferralSection = ({ wallet, setSuccess }) => {
         {/* Buttons */}
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-           variant="outlined"
+            variant="outlined"
             fullWidth
             onClick={() => {
               if (wallet.account) {

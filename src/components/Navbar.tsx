@@ -210,6 +210,21 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                 >
                   Home
                 </Button>
+
+                <Button
+                  color="inherit"
+                  component={RouterLink}
+                  to="/referral-details"
+                  sx={{
+                    borderRadius: '20px',
+                    px: 2,
+                    backgroundColor: isActive('/referral-details') ? 'rgba(255, 255, 255, 0.15)' : 'transparent'
+                  }}
+                  startIcon={<PeopleIcon />}
+                >
+                  Referrals
+                </Button>
+
                 {/* <Button
                   color="inherit"
                   component={RouterLink}
@@ -437,7 +452,27 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
               }}
               showLabels
             >
-       
+              <BottomNavigationAction
+                label="Home"
+                value="/"
+                icon={<HomeIcon />}
+                component={RouterLink}
+                to="/"
+              />
+              <BottomNavigationAction
+                label="Dashboard"
+                value="/dashboard"
+                icon={<DashboardIcon />}
+                component={RouterLink}
+                to="/dashboard"
+              />
+              <BottomNavigationAction
+                label="Referrals"
+                value="/referral-details"
+                icon={<PeopleIcon />}
+                component={RouterLink}
+                to="/referral-details"
+              />
             </BottomNavigation>
           </Box>
         </Paper>

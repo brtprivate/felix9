@@ -435,7 +435,7 @@ interface DWCContractInteractions {
   getUsersLength: () => Promise<bigint>;
   getContractBalance: () => Promise<bigint>;
   getAllStakeReward: () => Promise<bigint>;
-  getUserReferrers: (user: Address) => Promise<bigint>;
+  getUserReferrers: (user: Address) => Promise<{ referrers: Address[], count: bigint }>;
 }
 
 // Helper function to format percentages
@@ -1352,6 +1352,14 @@ export const dwcContractInteractions: DWCContractInteractions = {
   // },
   async getUserRecord(user: Address): Promise<UserRecord> {
     try {
+      const result = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "userRecord",
+        args: [user],
+        chainId: MAINNET_CHAIN_ID,
+      })) as any[];
+
       const [
         totalInvestment,
         directBusiness,
@@ -1360,18 +1368,12 @@ export const dwcContractInteractions: DWCContractInteractions = {
         totalWithdrawn,
         isRegistered,
         stakeCount,
-      ] = (await readContract(config, {
-        abi: DWC_ABI,
-        address: DWC_CONTRACT_ADDRESS,
-        functionName: "userRecord",
-        args: [user],
-        chainId: MAINNET_CHAIN_ID,
-      })) as [bigint, bigint, Address, bigint, bigint, boolean, bigint];
-
-      if (totalInvestment === undefined || directBusiness === undefined) {
-        // Example check; extend as needed
-        throw new Error("Undefined fields in userRecord response");
-      }
+      ] = result.map((v, i) => {
+        if (i === 0 || i === 1 || i === 3 || i === 4 || i === 6) return v ?? 0n; // bigints
+        if (i === 2) return v ?? "0x0000000000000000000000000000000000000000"; // address
+        if (i === 5) return v ?? false; // boolean
+        return v;
+      });
 
       console.log(`User record for ${user}:`, {
         totalInvestment,
@@ -1421,18 +1423,20 @@ export const dwcContractInteractions: DWCContractInteractions = {
   // },
   async getStakeRecord(user: Address, index: bigint): Promise<StakeRecord> {
     try {
-      const [packageIndex, lasClaimTime, rewardClaimed, maxRoi] =
-        (await readContract(config, {
-          abi: DWC_ABI,
-          address: DWC_CONTRACT_ADDRESS,
-          functionName: "stakeRecord",
-          args: [user, index],
-          chainId: MAINNET_CHAIN_ID,
-        })) as [bigint, bigint, bigint, bigint];
+      const result = (await readContract(config, {
+        abi: DWC_ABI,
+        address: DWC_CONTRACT_ADDRESS,
+        functionName: "stakeRecord",
+        args: [user, index],
+        chainId: MAINNET_CHAIN_ID,
+      })) as any[];
 
-      if (packageIndex === undefined) {
-        throw new Error("Undefined response from stakeRecord");
-      }
+      const [
+        packageIndex,
+        lasClaimTime,
+        rewardClaimed,
+        maxRoi,
+      ] = result.map((v, i) => v ?? 0n); // all are bigints
 
       console.log(`Stake record for ${user} at index ${index}:`, {
         packageIndex,
@@ -1682,33 +1686,34 @@ export const dwcContractInteractions: DWCContractInteractions = {
     }
   },
 
-  // async getUserReferrers(user: Address): Promise<bigint> {
-  //   try {
-  //     const [, count] = (await readContract(config, {
-  //       abi: DWC_ABI,
-  //       address: DWC_CONTRACT_ADDRESS,
-  //       functionName: "getUserReferrers",
-  //       args: [user],
-  //       chainId: MAINNET_CHAIN_ID,
-  //     })) as [Address[], bigint];
-  //     console.log(`User referrers count for ${user}: ${count}`);
-  //     return count;
-  //   } catch (error: any) {
-  //     console.error(`Error fetching user referrers: ${error.message || error}`);
-  //     throw error;
-  //   }
-  // },
-  async getUserReferrers(user: Address): Promise<bigint> {
+  async getUserReferrers(user: Address): Promise<{ referrers: Address[], count: bigint }> {
     try {
-      const [, count] = (await readContract(config, {
+      console.log(`Calling getUserReferrers for user: ${user}`);
+      const result = (await readContract(config, {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "getUserReferrers",
         args: [user],
         chainId: MAINNET_CHAIN_ID,
-      })) as [Address[], bigint];
-      console.log(`User referrers count for ${user}: ${count}`);
-      return count;
+      })) as any[];
+
+      console.log(`Raw result from contract:`, result);
+      console.log(`Result type:`, typeof result);
+      console.log(`Result length:`, Array.isArray(result) ? result.length : 'not array');
+
+      if (!Array.isArray(result)) {
+        console.error(`Result is not an array:`, result);
+        return { referrers: [], count: 0n };
+      }
+
+      const [referrers, count] = result.map((v, i) => {
+        if (i === 0) return v ?? []; // array
+        if (i === 1) return v ?? 0n; // bigint
+        return v;
+      });
+
+      console.log(`Processed user referrers for ${user}:`, { referrers, count });
+      return { referrers, count };
     } catch (error: any) {
       console.error(`Error fetching user referrers: ${error.message || error}`);
       throw error;
