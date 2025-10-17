@@ -21,10 +21,7 @@ import { ToastProvider } from "./components/common/ToastNotification";
 // Components & Pages
 import Navbar from "./components/Navbar";
 import MLMDashboard from "./pages/MLMDashboard";
-import MyHolding from "./pages/MyHolding";
-import MyTeam from "./pages/MyTeam";
-import SwapPage from "./pages/SwapPage";
-import RewardsPage from "./pages/RewardsPage";
+
 import Dashboard from "./pages/Dashboard";
 import Admin from "./pages/Admin";
 import ReferralDetails from "./pages/ReferralDetails";
@@ -100,13 +97,12 @@ function App() {
             <ToastProvider>
               <MLMProvider>
                 <Router>
-                  <Navbar />
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/dashboard" element={<MLMDashboard />} />
+                    <Route path="/" element={<><Navbar /><Dashboard /></>} />
+                    <Route path="/dashboard" element={<><Navbar /><MLMDashboard /></>} />
 
-                    <Route path="/admin" element={<Admin />} />
-                    <Route path="/referral-details" element={<ReferralDetails />} />
+                    <Route path="/admin" element={<><Navbar /><Admin /></>} />
+                    <Route path="/referral-details" element={<><Navbar /><ReferralDetails /></>} />
 
                     <Route path="*" element={<Navigate to="/" replace />} />
                   </Routes>

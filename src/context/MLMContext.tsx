@@ -6,7 +6,7 @@ import {
   dwcContractInteractions,
   DWC_CONTRACT_ADDRESS,
   DWC_ABI,
-  MAINNET_CHAIN_ID
+  BSC_TESTNET_CHAIN_ID
 } from '../services/contractService';
 import { formatUnits } from 'viem';
 
@@ -34,7 +34,7 @@ export const MLMProvider: React.FC<MLMProviderProps> = ({ children }) => {
   const { address, isConnected, chain } = useAccount();
   const [isMLMRegistered, setIsMLMRegistered] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const isCorrectNetwork = chain?.id === MAINNET_CHAIN_ID;
+  const isCorrectNetwork = chain?.id === BSC_TESTNET_CHAIN_ID;
 
   const checkMLMRegistration = async (): Promise<boolean> => {
     if (!address || !isCorrectNetwork) {
@@ -136,15 +136,9 @@ export const MLMProvider: React.FC<MLMProviderProps> = ({ children }) => {
     if (!address || !isCorrectNetwork || !isMLMRegistered) return [];
 
     try {
+      // TODO: Implement getDirectReferrals function in contract service
+      // For now, return empty array as referrals functionality is not yet implemented
       const referrals: string[] = [];
-      const userRecord = await dwcContractInteractions.getUserRecord(address as `0x${string}`);
-      if (Array.isArray(userRecord.referrals) && userRecord.referrals.length > 0) {
-        for (const referral of userRecord.referrals) {
-          if (referral !== '0x0000000000000000000000000000000000000000') {
-            referrals.push(referral);
-          }
-        }
-      }
       return referrals;
     } catch (error) {
       console.error('Error getting direct referrals:', error);

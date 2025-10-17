@@ -78,11 +78,16 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
   }
 
   return (
-    <Card sx={{ p: { xs: 2, sm: 3 }, boxShadow: 3 }}>
+    <Card sx={{ 
+      p: { xs: 2, sm: 3 }, 
+      boxShadow: 3, 
+      backgroundColor: '#2a2a2a',
+      border: '1px solid #3a3a3a'
+    }}>
       <Typography
         variant="h5"
         gutterBottom
-        sx={{ color: 'primary.main', fontWeight: 'bold', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
+        sx={{ color: '#ffffff', fontWeight: 'bold', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
       >
         Performance Overview
       </Typography>
@@ -96,114 +101,168 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
       <Typography
         variant="h6"
         gutterBottom
-        sx={{ color: 'primary.main', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}
+        sx={{ color: '#ffffff', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}
       >
         Financial Overview
       </Typography>
       <Grid container spacing={2} sx={{ mb: { xs: 3, sm: 4 } }}>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                 <AccountBalanceWalletIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Total Investment
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#4fc3f7', fontSize: '1.25rem' }}>
                 {formatCurrency(mlmData.totalInvestment || 0)}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <MonetizationOnIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <MonetizationOnIcon sx={{ color: '#4caf50', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Referral Bonus
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#4caf50', fontSize: '1.25rem' }}>
                 {formatCurrency(mlmData.referrerBonus || 0)}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <PeopleIcon sx={{ color: 'secondary.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <PeopleIcon sx={{ color: '#ff9800', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Active Packages
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'secondary.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ff9800', fontSize: '1.25rem' }}>
                 {mlmData.stakeCount || 0}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 Investments
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <TrendingUpIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <TrendingUpIcon sx={{ color: '#2196f3', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Total Claimed
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2196f3', fontSize: '1.25rem' }}>
                 {formatCurrency(financialMetrics.totalClaimed)}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <AccessTimeIcon sx={{ color: 'warning.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <AccessTimeIcon sx={{ color: '#ff9800', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Total Claimable
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'warning.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#ff9800', fontSize: '1.25rem' }}>
                 {formatCurrency(financialMetrics.totalClaimable)}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <StarsIcon sx={{ color: 'error.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <StarsIcon sx={{ color: '#f44336', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Total Rewards
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'error.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#f44336', fontSize: '1.25rem' }}>
                 {formatCurrency(financialMetrics.totalRewards)}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>
@@ -213,54 +272,81 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
        
        
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <BusinessCenterIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <BusinessCenterIcon sx={{ color: '#2196f3', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Direct Business
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2196f3', fontSize: '1.25rem' }}>
                 {formatCurrency(mlmData.directBusiness || 0)}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <AccountBalanceWalletIcon sx={{ color: 'info.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <AccountBalanceWalletIcon sx={{ color: '#2196f3', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Referrer
                 </Typography>
               </Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'info.main', fontSize: '1.25rem' }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2196f3', fontSize: '1.25rem' }}>
                 {mlmData.referrer && mlmData.referrer !== '0x0000000000000000000000000000000000000000' ? `${mlmData.referrer.slice(0, 6)}...${mlmData.referrer.slice(-4)}` : 'None'}
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 Address
               </Typography>
             </CardContent>
           </Card>
         </Grid>
         <Grid item xs={12} sm={6} md={4}>
-          <Card sx={{ p: 2, boxShadow: 2, height: '100%' }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            height: '100%',
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a',
+            '&:hover': {
+              backgroundColor: '#252525'
+            }
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                 <CheckCircleIcon sx={{ color: 'success.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Contract Status
                 </Typography>
               </Box>
               <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'success.main', fontSize: '1.25rem' }}>
                 Active
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', color: '#b0b0b0' }}>
                 Operational
               </Typography>
             </CardContent>
@@ -273,17 +359,35 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
           <Typography
             variant="h6"
             gutterBottom
-            sx={{ color: 'primary.main', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}
+            sx={{ color: '#ffffff', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1rem', sm: '1.25rem' } }}
           >
             Your Active Stakes
           </Typography>
           {stakes.length === 0 ? (
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: '#b0b0b0' }}>
               No active stakes available.
             </Typography>
           ) : (
-            <TableContainer component={Paper} sx={{ mb: { xs: 2, sm: 3 } }}>
-              <Table size="small" aria-label="Active stakes table">
+            <TableContainer component={Paper} sx={{ 
+              mb: { xs: 2, sm: 3 },
+              backgroundColor: '#1e1e1e',
+              border: '1px solid #3a3a3a'
+            }}>
+              <Table size="small" aria-label="Active stakes table" sx={{
+                '& .MuiTableCell-head': {
+                  backgroundColor: '#2a2a2a',
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  borderBottom: '1px solid #3a3a3a'
+                },
+                '& .MuiTableCell-body': {
+                  color: '#e0e0e0',
+                  borderBottom: '1px solid #3a3a3a'
+                },
+                '& .MuiTableRow-root:hover': {
+                  backgroundColor: '#252525'
+                }
+              }}>
                 <TableHead>
                   <TableRow>
                     <TableCell scope="col">Package</TableCell>
@@ -321,9 +425,22 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                               size="small"
                               onClick={() => handleClaimClick(stake.index)}
                               disabled={loadingStakes[stake.index] || stake.claimable <= 0}
-                              startIcon={loadingStakes[stake.index] ? <CircularProgress size={16} /> : null}
-                              color={stake.claimable <= 0 ? 'inherit' : ''}
-                              sx={stake.claimable <= 0 ? { backgroundColor: 'grey.300', color: 'grey.600' } : {}}
+                              startIcon={loadingStakes[stake.index] ? <CircularProgress size={16} sx={{ color: '#ffffff' }} /> : null}
+                              sx={{
+                                backgroundColor: stake.claimable <= 0 ? '#666666' : '#4caf50',
+                                color: '#ffffff',
+                                '&:hover': {
+                                  backgroundColor: stake.claimable <= 0 ? '#666666' : '#45a049',
+                                },
+                                '&:disabled': {
+                                  backgroundColor: '#666666',
+                                  color: '#ffffff',
+                                  opacity: 0.7
+                                },
+                                fontWeight: 'bold',
+                                textTransform: 'none',
+                                minWidth: '80px'
+                              }}
                             >
                               {loadingStakes[stake.index] ? 'Claiming...' : stake.claimable <= 0 ? 'No Claim' : 'Claim'}
                             </Button>
@@ -337,15 +454,21 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
             </TableContainer>
           )}
 
-          <Card sx={{ p: 2, boxShadow: 2, mt: 3 }}>
+          <Card sx={{ 
+            p: 2, 
+            boxShadow: 2, 
+            mt: 3,
+            backgroundColor: '#1e1e1e',
+            border: '1px solid #3a3a3a'
+          }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
-                <MonetizationOnIcon sx={{ color: 'primary.main', mr: 1, fontSize: '1.5rem' }} />
-                <Typography variant="h6" sx={{ fontSize: '0.9rem' }}>
+                <MonetizationOnIcon sx={{ color: '#4fc3f7', mr: 1, fontSize: '1.5rem' }} />
+                <Typography variant="h6" sx={{ fontSize: '0.9rem', color: '#e0e0e0' }}>
                   Earning Limit
                 </Typography>
               </Box>
-              <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'primary.main', mb: 2, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', color: '#4fc3f7', mb: 2, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                 {formatCurrency(financialMetrics.earningLimit)}
               </Typography>
               <Box sx={{ mb: 2 }}>
@@ -361,23 +484,23 @@ const PerformanceOverview = ({ mlmData = {}, stakes = [], notRegistered, handleW
                     },
                   }}
                 />
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.8rem' }}>
+                <Typography variant="body2" sx={{ mt: 0.5, textAlign: 'right', fontSize: '0.8rem', color: '#b0b0b0' }}>
                   {financialMetrics.percentage.toFixed(2)}% Used
                 </Typography>
               </Box>
               <Grid container spacing={1}>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="warning.main" sx={{ fontSize: '0.85rem' }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#ff9800' }}>
                     Used: {formatCurrency(financialMetrics.used)}
                   </Typography>
                 </Grid>
                 <Grid item xs={6}>
-                  <Typography variant="body2" color="success.main" sx={{ fontSize: '0.85rem' }}>
+                  <Typography variant="body2" sx={{ fontSize: '0.85rem', color: '#4caf50' }}>
                     Remaining: {formatCurrency(financialMetrics.remaining)}
                   </Typography>
                 </Grid>
               </Grid>
-              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', mt: 1 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.8rem', mt: 1, color: '#b0b0b0' }}>
                 USDT
               </Typography>
             </CardContent>

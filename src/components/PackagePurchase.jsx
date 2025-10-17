@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import DiamondIcon from '@mui/icons-material/Diamond';
 import { formatUnits } from 'viem';
-import { MAINNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
+import { BSC_TESTNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { config } from '../config/web3modal';
 
@@ -31,14 +31,14 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
       setError('Please connect your wallet to buy package.');
       return;
     }
-    if (chainId !== MAINNET_CHAIN_ID) {
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        console.log('Switching chain to BSC Mainnet...');
-        await switchChain({ chainId: MAINNET_CHAIN_ID });
+        console.log('Switching chain to BSC Testnet...');
+        await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
         console.log('Chain switched successfully.');
       } catch (error) {
         console.error('Error switching chain:', error);
-        setError('Please switch to BSC Mainnet.');
+        setError('Please switch to BSC Testnet.');
         return;
       }
     }
@@ -86,7 +86,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
       console.log('Transaction hash received:', txHash);
 
       setSuccess('Transaction submitted! Waiting for confirmation...');
-      await waitForTransactionReceipt(config, { hash: txHash, chainId: MAINNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { hash: txHash, chainId: BSC_TESTNET_CHAIN_ID });
 
       setSuccess(`Successfully purchased ${packageInfo.name} for $${packageDetail.price} USDT! Transaction: ${txHash}`);
 
@@ -111,32 +111,91 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
   };
 
   return (
-    <Card sx={{ p: { xs: 2, sm: 3 }, boxShadow: 3, display: 'flex', flexDirection: 'column', mb: 2 }}>
+    <Card sx={{ 
+      p: { xs: 2, sm: 3 }, 
+      boxShadow: 3, 
+      display: 'flex', 
+      flexDirection: 'column', 
+      mb: 2,
+      backgroundColor: '#2a2a2a',
+      border: '1px solid #3a3a3a'
+    }}>
       <Typography
         variant="h5"
         gutterBottom
-        sx={{ color: 'primary.main', fontWeight: 'bold', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
+        sx={{ color: '#ffffff', fontWeight: 'bold', mb: { xs: 2, sm: 3 }, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}
       >
         Package Purchase
       </Typography>
 
       {!notRegistered && (
         <Box sx={{ mb: { xs: 3, sm: 4 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <Typography variant="h6" sx={{ color: 'primary.main', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+          <Typography variant="h6" sx={{ color: '#ffffff', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
             Buy Package
           </Typography>
           <FormControl fullWidth>
-            <InputLabel>Package Type</InputLabel>
+            <InputLabel sx={{ color: '#ffffff' }}>Package Type</InputLabel>
             <Select
               value={selectedPackage}
               label="Package Type"
               onChange={(e) => setSelectedPackage(Number(e.target.value))}
+              sx={{
+                color: '#ffffff',
+                backgroundColor: '#1e1e1e',
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#ffffff',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#ffffff',
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: '#ffffff',
+                },
+                '& .MuiSvgIcon-root': {
+                  color: '#ffffff',
+                },
+                '& .MuiSelect-select': {
+                  backgroundColor: '#1e1e1e',
+                  color: '#ffffff'
+                }
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    backgroundColor: '#1e1e1e',
+                    border: '1px solid #3a3a3a',
+                    '& .MuiMenuItem-root': {
+                      backgroundColor: '#1e1e1e',
+                      color: '#ffffff',
+                      '&:hover': {
+                        backgroundColor: '#2a2a2a'
+                      }
+                    }
+                  }
+                }
+              }}
             >
               {packageDetails.map((pkg, index) => (
-                <MenuItem key={index} value={index}>
+                <MenuItem 
+                  key={index} 
+                  value={index}
+                  sx={{
+                    backgroundColor: '#1e1e1e',
+                    color: '#ffffff',
+                    '&:hover': {
+                      backgroundColor: '#2a2a2a'
+                    },
+                    '&.Mui-selected': {
+                      backgroundColor: '#3a3a3a',
+                      '&:hover': {
+                        backgroundColor: '#3a3a3a'
+                      }
+                    }
+                  }}
+                >
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                    <Typography>{pkg.name}</Typography>
-                    <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
+                    <Typography sx={{ color: '#ffffff' }}>{pkg.name}</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 'bold', color: '#4fc3f7' }}>
                       ${pkg.price} USDT
                     </Typography>
                   </Box>
@@ -146,19 +205,23 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
           </FormControl>
 
           {packageDetails.length > 0 && packageDetails[selectedPackage] && (
-            <Card sx={{ p: 2, bgcolor: 'background.paper', border: '1px solid', borderColor: 'primary.light' }}>
-              <Typography variant="h6" sx={{ color: 'primary.main', mb: 1 }}>
+            <Card sx={{ 
+              p: 2, 
+              backgroundColor: '#1e1e1e', 
+              border: '1px solid #3a3a3a'
+            }}>
+              <Typography variant="h6" sx={{ color: '#ffffff', mb: 1 }}>
                 {packageDetails[selectedPackage].name}
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#e0e0e0' }}>
                   Price: ${packageDetails[selectedPackage].price} USDT
                 </Typography>
-                <Typography variant="body1" sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#4caf50' }}>
                   ROI: {packageDetails[selectedPackage].roiPercent}%
                 </Typography>
               </Box>
-              <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>Features:</Typography>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold', color: '#e0e0e0' }}>Features:</Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                 {packageDetails[selectedPackage].features.map((feature, idx) => (
                   <Box
@@ -166,8 +229,8 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
                     sx={{
                       px: 1.5,
                       py: 0.5,
-                      bgcolor: 'primary.light',
-                      color: '',
+                      backgroundColor: '#3a3a3a',
+                      color: '#ffffff',
                       borderRadius: 1,
                       fontSize: '0.75rem',
                     }}
@@ -207,7 +270,7 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
               : 'Buy Selected Package'}
           </Button>
 
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
+          <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, color: '#b0b0b0' }}>
             USDT approval will be handled automatically. Ensure you have sufficient USDT balance and BNB for gas fees.
           </Typography>
         </Box>

@@ -3,12 +3,21 @@ import { Box, Button, Card, CardContent, TextField, Typography, Divider } from '
 
 const ReferralSection = ({ wallet, setSuccess }) => {
   return (
-    <Card sx={{ boxShadow: 3, borderRadius: 2 }}>
+    <Card sx={{ 
+      boxShadow: 3, 
+      borderRadius: 2,
+      backgroundColor: '#2a2a2a',
+      border: '1px solid #3a3a3a'
+    }}>
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Title */}
         <Typography
           variant="h6"
-          sx={{ fontSize: { xs: '1rem', sm: '1.25rem' }, fontWeight: 600 }}
+          sx={{ 
+            fontSize: { xs: '1rem', sm: '1.25rem' }, 
+            fontWeight: 600,
+            color: '#ffffff'
+          }}
         >
           Your Referral Code
         </Typography>
@@ -21,7 +30,24 @@ const ReferralSection = ({ wallet, setSuccess }) => {
           InputProps={{ readOnly: true }}
           size="small"
           sx={{
-            '& .MuiInputBase-input': { fontSize: { xs: '0.875rem', sm: '1rem' } },
+            '& .MuiInputBase-input': { 
+              fontSize: { xs: '0.875rem', sm: '1rem' },
+              color: '#ffffff'
+            },
+            '& .MuiInputLabel-root': {
+              color: '#ffffff',
+            },
+            '& .MuiOutlinedInput-root': {
+              '& fieldset': {
+                borderColor: '#ffffff',
+              },
+              '&:hover fieldset': {
+                borderColor: '#ffffff',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#ffffff',
+              },
+            },
           }}
         />
 
@@ -37,8 +63,15 @@ const ReferralSection = ({ wallet, setSuccess }) => {
               }
             }}
             disabled={!wallet.account}
-            color=''
-            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              color: '#ffffff',
+              borderColor: '#ffffff',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: '#ffffff'
+              }
+            }}
           >
             Copy
           </Button>
@@ -66,21 +99,32 @@ const ReferralSection = ({ wallet, setSuccess }) => {
               }
             }}
             disabled={!wallet.account}
-            sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+            sx={{ 
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              color: '#ffffff',
+              borderColor: '#ffffff',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: '#ffffff'
+              }
+            }}
           >
             Share
           </Button>
         </Box>
 
-        <Divider />
+        <Divider sx={{ borderColor: '#3a3a3a' }} />
 
         {/* Info Text */}
         <Typography
           variant="body2"
-          color="text.secondary"
-          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' }, lineHeight: 1.6 }}
+          sx={{ 
+            fontSize: { xs: '0.75rem', sm: '0.875rem' }, 
+            lineHeight: 1.6,
+            color: '#b0b0b0'
+          }}
         >
-          Share this code with your friends. You’ll earn referral bonuses when they join
+          Share this code with your friends. You'll earn referral bonuses when they join
           and purchase a package!
         </Typography>
       </CardContent>

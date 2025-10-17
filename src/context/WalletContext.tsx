@@ -2,7 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import { useAccount, useDisconnect, useSwitchChain } from 'wagmi';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { Address } from 'viem';
-import { dwcContractInteractions, MAINNET_CHAIN_ID } from '../services/contractService';
+import { dwcContractInteractions, BSC_TESTNET_CHAIN_ID } from '../services/contractService';
 
 interface WalletContextType {
   account: string | null;
@@ -42,7 +42,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const [isRegistered, setIsRegistered] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
 
-  const isCorrectNetwork = chain?.id === MAINNET_CHAIN_ID;
+  const isCorrectNetwork = chain?.id === BSC_TESTNET_CHAIN_ID;
 
   const connectWallet = async () => {
     try {
@@ -81,7 +81,7 @@ export const WalletProvider: React.FC<WalletProviderProps> = ({ children }) => {
   const switchToCorrectNetwork = async (): Promise<boolean> => {
     if (!isCorrectNetwork && switchChainAsync) {
       try {
-        await switchChainAsync({ chainId: MAINNET_CHAIN_ID });
+        await switchChainAsync({ chainId: BSC_TESTNET_CHAIN_ID });
         return true;
       } catch (error) {
         console.error('Error switching network:', error);

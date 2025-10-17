@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { useWallet } from '../context/WalletContext';
 import { useChainId, useSwitchChain } from 'wagmi';
-import { MAINNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
+import { BSC_TESTNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { config } from '../config/web3modal';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -41,11 +41,11 @@ const Dashboard = () => {
       return;
     }
 
-    if (chainId !== MAINNET_CHAIN_ID) {
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: MAINNET_CHAIN_ID });
+        await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Mainnet.');
+        setError('Please switch to BSC Testnet.');
         return;
       }
     }
@@ -57,7 +57,7 @@ const Dashboard = () => {
 
       const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7';
       const registerTx = await dwcContractInteractions.registration(refCode, wallet.account);
-      await waitForTransactionReceipt(config, { hash: registerTx, chainId: MAINNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { hash: registerTx, chainId: BSC_TESTNET_CHAIN_ID });
 
       setSuccess(`Registration successful! Transaction: ${registerTx}`);
       setReferralCode('');
@@ -84,11 +84,11 @@ const Dashboard = () => {
       return;
     }
 
-    if (chainId !== MAINNET_CHAIN_ID) {
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: MAINNET_CHAIN_ID });
+        await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Mainnet.');
+        setError('Please switch to BSC Testnet.');
         onComplete?.();
         return;
       }
@@ -126,7 +126,7 @@ const Dashboard = () => {
       const txHash = await dwcContractInteractions.withdraw(BigInt(index), wallet.account);
 
       setSuccess('Transaction submitted! Waiting for confirmation...');
-      await waitForTransactionReceipt(config, { hash: txHash, chainId: MAINNET_CHAIN_ID });
+      await waitForTransactionReceipt(config, { hash: txHash, chainId: BSC_TESTNET_CHAIN_ID });
 
       setSuccess(`Successfully withdrawn $${stakeToWithdraw.claimable.toFixed(4)} USDC! Transaction: ${txHash}`);
 

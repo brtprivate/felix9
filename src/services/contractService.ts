@@ -5,7 +5,7 @@ import {
   waitForTransactionReceipt,
 } from "@wagmi/core";
 import { config } from "../config/web3modal";
-import { bsc } from "wagmi/chains";
+import { bsc, bscTestnet } from "wagmi/chains";
 import type { Address } from "viem";
 import { parseUnits, formatUnits, decodeErrorResult } from "viem";
 import {
@@ -16,15 +16,22 @@ import {
 
 // Export USDC_ABI for use in other files
 export { USDC_ABI };
-
-// Contract configuration - BSC Mainnet
+// https://testnet.bscscan.com/address/0x8e90aa73cd1dda82dfb62807ef8bfc2112d90def#writeContract
+// Contract configuration - BSC Testnet
 export const DWC_CONTRACT_ADDRESS =
-  "0x1504e18Bf6eF5513A7ca065e2DD1Daba27AFF068" as Address;
-export const MAINNET_CHAIN_ID = 56;
-export const TESTNET_CHAIN_ID = MAINNET_CHAIN_ID;
-
+  "0x8e90aa73cd1dda82dfb62807ef8bfc2112d90def" as Address;
+export const BSC_TESTNET_CHAIN_ID = 97;
+export const MAINNET_CHAIN_ID = BSC_TESTNET_CHAIN_ID; // For backward compatibility
+export const TESTNET_CHAIN_ID = BSC_TESTNET_CHAIN_ID;
+export const getFunctionName = () => {
+  if (BSC_TESTNET_CHAIN_ID == 97) {
+    return bscTestnet;
+  } else {
+    return bsc;
+  }
+};
 // Add getChainId function for compatibility
-export const getChainId = () => MAINNET_CHAIN_ID;
+export const getChainId = () => BSC_TESTNET_CHAIN_ID;
 
 // DWC Contract ABI
 export const DWC_ABI = [
@@ -226,6 +233,16 @@ export const DWC_ABI = [
     type: "function",
   },
   {
+    inputs: [
+      { internalType: "uint256", name: "startIndex", type: "uint256" },
+      { internalType: "uint256", name: "endIndex", type: "uint256" },
+    ],
+    name: "distributeRewardsToAll",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
     inputs: [],
     name: "getContractBalance",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
@@ -315,6 +332,7 @@ export const DWC_ABI = [
       { internalType: "uint256", name: "packageIndex", type: "uint256" },
       { internalType: "uint256", name: "lasClaimTime", type: "uint256" },
       { internalType: "uint256", name: "rewardClaimed", type: "uint256" },
+      { internalType: "uint256", name: "claimable", type: "uint256" },
       { internalType: "uint256", name: "maxRoi", type: "uint256" },
     ],
     stateMutability: "view",
@@ -435,7 +453,9 @@ interface DWCContractInteractions {
   getUsersLength: () => Promise<bigint>;
   getContractBalance: () => Promise<bigint>;
   getAllStakeReward: () => Promise<bigint>;
-  getUserReferrers: (user: Address) => Promise<{ referrers: Address[], count: bigint }>;
+  getUserReferrers: (
+    user: Address
+  ) => Promise<{ referrers: Address[]; count: bigint }>;
 }
 
 // Helper function to format percentages
@@ -475,10 +495,10 @@ async function buyPackage(
 
       console.log(`Package price (wei): ${packagePrice.toString()}`);
       console.log(
-        `Package price (USDT): ${formatUnits(packagePrice, 18)} USDT`
+        `Package price (USDC): ${formatUnits(packagePrice, 18)} USDC`
       );
       console.log(`User balance (wei): ${balance.toString()}`);
-      console.log(`User balance (USDT): ${formatUnits(balance, 18)} USDT`);
+      console.log(`User balance (USDC): ${formatUnits(balance, 18)} USDC`);
 
       // if (balance < packagePrice) {
       //   throw new Error(
@@ -495,7 +515,7 @@ async function buyPackage(
         address: USDC_CONTRACT_ADDRESS,
         functionName: "allowance",
         args: [account, DWC_CONTRACT_ADDRESS],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
 
       console.log(`Current allowance (wei): ${currentAllowance.toString()}`);
@@ -506,37 +526,6 @@ async function buyPackage(
         `Required allowance (USDT): ${formatUnits(packagePrice, 18)} USDT`
       );
 
-      // if (currentAllowance < packagePrice) {
-      //   console.log(
-      //     `🔐 REQUESTING USDT APPROVAL: ${formatUnits(packagePrice, 18)} USDT`
-      //   );
-      //   console.log(`Approving DWC contract: ${DWC_CONTRACT_ADDRESS}`);
-
-      //   // // Reset allowance to 0 if necessary
-      //   // if (currentAllowance > 0n) {
-      //   //   console.log("Resetting USDT allowance to 0 first...");
-      //   //   const resetTx = await writeContract(config, {
-      //   //     abi: USDC_ABI,
-      //   //     address: USDC_CONTRACT_ADDRESS,
-      //   //     functionName: "approve",
-      //   //     args: [DWC_CONTRACT_ADDRESS, 0n],
-      //   //     chain: bsc,
-      //   //     account,
-      //   //   });
-      //   //   await waitForTransactionReceipt(config, {
-      //   //     hash: resetTx as `0x${string}`,
-      //   //     chainId: MAINNET_CHAIN_ID,
-      //   //   });
-      //   //   console.log("Allowance reset to 0");
-      //   // }
-
-      //   // Approve new amount - packagePrice is already in wei from contract
-      //   // Convert to ensure we have proper wei amount (packagePrice should already be in wei)
-      //   const approvalAmount = packagePrice * 2n; // packagePrice is already in wei (18 decimals)
-
-      //   console.log(`Approval amount in wei: ${approvalAmount.toString()}`);
-      //   console.log(`Approval amount in USDT: ${formatUnits(approvalAmount, 18)}`);
-
       const amountToApprove = parseUnits("20000", 18); // 20,000 USDT = 20000 * 10^18
 
       const approvalTx = await writeContract(config, {
@@ -544,7 +533,7 @@ async function buyPackage(
         address: USDC_CONTRACT_ADDRESS, // e.g. BSC mainnet USDT: 0x55d398326f99059fF775485246999027B3197955
         functionName: "approve",
         args: [DWC_CONTRACT_ADDRESS, amountToApprove],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
       });
 
@@ -591,7 +580,7 @@ async function buyPackage(
         address: DWC_CONTRACT_ADDRESS,
         functionName,
         args: [],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         // maxFeePerGas: parseUnits("10", 9),
         // maxPriorityFeePerGas: parseUnits("5", 9),
@@ -602,7 +591,7 @@ async function buyPackage(
       // Step 5: Wait for purchase confirmation
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       });
 
       if (receipt.status === "reverted") {
@@ -699,7 +688,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: USDC_CONTRACT_ADDRESS,
           functionName: "allowance",
           args: [account, DWC_CONTRACT_ADDRESS],
-          chainId: MAINNET_CHAIN_ID,
+          chainId: BSC_TESTNET_CHAIN_ID,
         })) as bigint;
 
         console.log(
@@ -720,13 +709,13 @@ export const dwcContractInteractions: DWCContractInteractions = {
             address: USDC_CONTRACT_ADDRESS,
             functionName: "approve",
             args: [DWC_CONTRACT_ADDRESS, 0n],
-            chain: bsc,
+            chain: getFunctionName(),
             account,
           });
 
           await waitForTransactionReceipt(config, {
             hash: resetTx as `0x${string}`,
-            chainId: MAINNET_CHAIN_ID,
+            chainId: BSC_TESTNET_CHAIN_ID,
           });
           console.log("Allowance reset to 0");
         }
@@ -737,7 +726,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: USDC_CONTRACT_ADDRESS,
           functionName: "approve",
           args: [DWC_CONTRACT_ADDRESS, amount],
-          chain: bsc,
+          chain: getFunctionName(),
           account,
         });
 
@@ -745,7 +734,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
 
         const receipt = await waitForTransactionReceipt(config, {
           hash: txHash as `0x${string}`,
-          chainId: MAINNET_CHAIN_ID,
+          chainId: BSC_TESTNET_CHAIN_ID,
         });
         console.log("Transaction receipt:", receipt);
 
@@ -759,7 +748,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: USDC_CONTRACT_ADDRESS,
           functionName: "allowance",
           args: [account, DWC_CONTRACT_ADDRESS],
-          chainId: MAINNET_CHAIN_ID,
+          chainId: BSC_TESTNET_CHAIN_ID,
         })) as bigint;
 
         console.log(`New allowance: ${formatUnits(newAllowance, 18)} USDC`);
@@ -839,7 +828,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: DWC_CONTRACT_ADDRESS,
           functionName: "registration",
           args: [referrer],
-          chain: bsc,
+          chain: getFunctionName(),
           account,
           // maxFeePerGas: parseUnits('5', 9),
           // maxPriorityFeePerGas: parseUnits('2', 9),
@@ -849,7 +838,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: DWC_CONTRACT_ADDRESS,
           functionName: "registration",
           args: [referrer],
-          chain: bsc,
+          chain: getFunctionName(),
           account,
           // gas: gasEstimate * 120n / 100n, // Add 20% buffer
           // maxFeePerGas: parseUnits('5', 9),
@@ -857,7 +846,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         });
         const receipt = await waitForTransactionReceipt(config, {
           hash: txHash as `0x${string}`,
-          chainId: MAINNET_CHAIN_ID,
+          chainId: BSC_TESTNET_CHAIN_ID,
         });
         if (receipt.status === "reverted") {
           throw new Error("Registration transaction reverted.");
@@ -963,7 +952,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
           address: DWC_CONTRACT_ADDRESS,
           functionName: "withdraw",
           args: [index],
-          chain: bsc,
+          chain: getFunctionName(),
           account,
           maxFeePerGas: parseUnits("10", 9), // Increased gas price
           maxPriorityFeePerGas: parseUnits("5", 9), // Increased priority fee
@@ -973,7 +962,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
 
         const receipt = await waitForTransactionReceipt(config, {
           hash: txHash as `0x${string}`,
-          chainId: MAINNET_CHAIN_ID,
+          chainId: BSC_TESTNET_CHAIN_ID,
         });
 
         if (receipt.status === "reverted") {
@@ -1057,7 +1046,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "allowance",
         args: [account, DWC_CONTRACT_ADDRESS],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       if (allowance < amount) {
         console.log(
@@ -1070,7 +1059,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         );
         await waitForTransactionReceipt(config, {
           hash: approvalTx as `0x${string}`,
-          chainId: MAINNET_CHAIN_ID,
+          chainId: BSC_TESTNET_CHAIN_ID,
         });
       }
       const gasEstimate = await estimateGas(config, {
@@ -1078,7 +1067,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "liquidity",
         args: [amount],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1088,7 +1077,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "liquidity",
         args: [amount],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1096,7 +1085,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       });
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       });
       if (receipt.status === "reverted") {
         throw new Error("Liquidity transaction reverted.");
@@ -1123,7 +1112,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "changeDirectPercentage",
         args: [directIncome],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1133,7 +1122,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "changeDirectPercentage",
         args: [directIncome],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1141,7 +1130,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       });
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       });
       if (receipt.status === "reverted") {
         throw new Error("Change direct income transaction reverted.");
@@ -1171,7 +1160,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "transferOwnership",
         args: [newOwner],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1181,7 +1170,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "transferOwnership",
         args: [newOwner],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1189,7 +1178,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       });
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       });
       if (receipt.status === "reverted") {
         throw new Error("Transfer ownership transaction reverted.");
@@ -1213,7 +1202,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "renounceOwnership",
         args: [],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1223,7 +1212,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "renounceOwnership",
         args: [],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1231,7 +1220,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       });
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       });
       if (receipt.status === "reverted") {
         throw new Error("Renounce ownership transaction reverted.");
@@ -1261,7 +1250,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "updateRoiPercent",
         args: [index, newPercent],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         maxFeePerGas: parseUnits("5", 9),
         maxPriorityFeePerGas: parseUnits("2", 9),
@@ -1271,7 +1260,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "updateRoiPercent",
         args: [index, newPercent],
-        chain: bsc,
+        chain: getFunctionName(),
         account,
         gas: (gasEstimate * 120n) / 100n,
         maxFeePerGas: parseUnits("5", 9),
@@ -1279,7 +1268,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       });
       const receipt = await waitForTransactionReceipt(config, {
         hash: txHash as `0x${string}`,
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       });
       if (receipt.status === "reverted") {
         throw new Error("Update ROI percent transaction reverted.");
@@ -1299,7 +1288,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "balanceOf",
         args: [account],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(
         `USDC balance for ${account}: ${formatUnits(balance, 18)} USDC`
@@ -1315,41 +1304,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
     }
   },
 
-  // async getUserRecord(user: Address): Promise<UserRecord> {
-  //   try {
-  //     const [
-  //       totalInvestment,
-  //       referrer,
-  //       referrerBonus,
-  //       isRegistered,
-  //       stakeCount,
-  //     ] = (await readContract(config, {
-  //       abi: DWC_ABI,
-  //       address: DWC_CONTRACT_ADDRESS,
-  //       functionName: "userRecord",
-  //       args: [user],
-  //       chainId: MAINNET_CHAIN_ID,
-  //     })) as [bigint, Address, bigint, boolean, bigint];
-  //     console.log(`User record for ${user}:`, {
-  //       totalInvestment,
-  //       referrer,
-  //       referrerBonus,
-  //       isRegistered,
-  //       stakeCount,
-  //     });
-  //     return {
-  //       referrals: false,
-  //       totalInvestment,
-  //       referrer,
-  //       referrerBonus,
-  //       isRegistered,
-  //       stakeCount,
-  //     };
-  //   } catch (error: any) {
-  //     console.error(`Error fetching user record: ${error.message || error}`);
-  //     throw error;
-  //   }
-  // },
+  
   async getUserRecord(user: Address): Promise<UserRecord> {
     try {
       const result = (await readContract(config, {
@@ -1357,7 +1312,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "userRecord",
         args: [user],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as any[];
 
       const [
@@ -1407,7 +1362,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
   //         address: DWC_CONTRACT_ADDRESS,
   //         functionName: "stakeRecord",
   //         args: [user, index],
-  //         chainId: MAINNET_CHAIN_ID,
+  //         chainId: BSC_TESTNET_CHAIN_ID,
   //       }
   //     )) as [bigint, bigint, bigint];
   //     console.log(`Stake record for ${user} at index ${index}:`, {
@@ -1428,15 +1383,12 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "stakeRecord",
         args: [user, index],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as any[];
 
-      const [
-        packageIndex,
-        lasClaimTime,
-        rewardClaimed,
-        maxRoi,
-      ] = result.map((v, i) => v ?? 0n); // all are bigints
+      const [packageIndex, lasClaimTime, rewardClaimed, maxRoi] = result.map(
+        (v, i) => v ?? 0n
+      ); // all are bigints
 
       console.log(`Stake record for ${user} at index ${index}:`, {
         packageIndex,
@@ -1457,7 +1409,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "packagePrice",
         args: [index],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(
         `Package price for index ${index}: ${formatUnits(price, 18)} USDC`
@@ -1476,7 +1428,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "roiPercent",
         args: [index],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`ROI percent for index ${index}: ${percent}`);
       return percent;
@@ -1492,7 +1444,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "MAX_ROI",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`Max ROI: ${maxRoi}`);
       return maxRoi;
@@ -1508,7 +1460,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "contractPercent",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`Contract percent: ${percent}`);
       return percent;
@@ -1526,7 +1478,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "directIncome",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`Direct income: ${income}`);
       return income;
@@ -1542,7 +1494,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "percentDivider",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`Percent divider: ${divider}`);
       return divider;
@@ -1560,7 +1512,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "owner",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as Address;
       console.log(`Owner: ${owner}`);
       return owner;
@@ -1577,7 +1529,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "uniqueUsers",
         args: [index],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as Address;
       console.log(`Unique user at index ${index}: ${user}`);
       return user;
@@ -1594,7 +1546,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "calculateClaimAble",
         args: [user, index],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(
         `Claimable amount for ${user} at index ${index}: ${formatUnits(
@@ -1617,7 +1569,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "getUSersLengh",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`Users length: ${length}`);
       return length;
@@ -1633,7 +1585,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "getContractBalance",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`Contract balance: ${formatUnits(balance, 18)} USDC`);
       return balance;
@@ -1651,7 +1603,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
         functionName: "getallstakereward",
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(`All stake reward: ${formatUnits(reward, 18)} USDC`);
       return reward;
@@ -1664,29 +1616,31 @@ export const dwcContractInteractions: DWCContractInteractions = {
   },
   async getUSDTBalance(account: Address): Promise<bigint> {
     try {
-      console.log(`Fetching USDT balance for account: ${account}`);
+      console.log(`Fetching USDC balance for account: ${account}`);
       const balance = (await readContract(config, {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "balanceOf",
         args: [account],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;
       console.log(
-        `USDT balance for ${account}: ${formatUnits(balance, 18)} USDT`
+        `USDC balance for ${account}: ${formatUnits(balance, 18)} USDC`
       );
       return balance;
     } catch (error: any) {
       console.error(
-        `Error fetching USDT balance for ${account}: ${error.message || error}`
+        `Error fetching USDC balance for ${account}: ${error.message || error}`
       );
       throw new Error(
-        `Failed to fetch USDT balance: ${error.message || "Unknown error"}`
+        `Failed to fetch USDC balance: ${error.message || "Unknown error"}`
       );
     }
   },
 
-  async getUserReferrers(user: Address): Promise<{ referrers: Address[], count: bigint }> {
+  async getUserReferrers(
+    user: Address
+  ): Promise<{ referrers: Address[]; count: bigint }> {
     try {
       console.log(`Calling getUserReferrers for user: ${user}`);
       const result = (await readContract(config, {
@@ -1694,12 +1648,15 @@ export const dwcContractInteractions: DWCContractInteractions = {
         address: DWC_CONTRACT_ADDRESS,
         functionName: "getUserReferrers",
         args: [user],
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
       })) as any[];
 
       console.log(`Raw result from contract:`, result);
       console.log(`Result type:`, typeof result);
-      console.log(`Result length:`, Array.isArray(result) ? result.length : 'not array');
+      console.log(
+        `Result length:`,
+        Array.isArray(result) ? result.length : "not array"
+      );
 
       if (!Array.isArray(result)) {
         console.error(`Result is not an array:`, result);
@@ -1712,7 +1669,10 @@ export const dwcContractInteractions: DWCContractInteractions = {
         return v;
       });
 
-      console.log(`Processed user referrers for ${user}:`, { referrers, count });
+      console.log(`Processed user referrers for ${user}:`, {
+        referrers,
+        count,
+      });
       return { referrers, count };
     } catch (error: any) {
       console.error(`Error fetching user referrers: ${error.message || error}`);

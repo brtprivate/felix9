@@ -1,5 +1,5 @@
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
-import { bsc } from 'wagmi/chains';
+import { bsc, bscTestnet } from 'wagmi/chains';
 import { NETWORK_CONFIG } from '../config';
 
 const projectId = 'b0cebcda95846f0aabc833a9f05dca99';
@@ -10,19 +10,31 @@ const metadata = {
   icons: ['https://felix9.io/favicon.ico']
 };
 
-const bscChain = {
-  ...bsc,
+const bscTestnetChain = {
+  ...bscTestnet,
   rpcUrls: {
     default: {
       http: [NETWORK_CONFIG.rpcUrl],
     },
   },
   blockExplorers: {
-    default: { name: 'BscScan', url: NETWORK_CONFIG.explorerUrl },
+    default: { name: 'BscScan Testnet', url: NETWORK_CONFIG.explorerUrl },
   },
 };
 
-const chains = [bscChain] as const;
+const bscChain = {
+  ...bsc,
+  rpcUrls: {
+    default: {
+      http: ['https://bsc-dataseed.binance.org/'],
+    },
+  },
+  blockExplorers: {
+    default: { name: 'BscScan', url: 'https://bscscan.com' },
+  },
+};
+
+const chains = [bscTestnetChain, bscChain] as const;
 
 export const config = defaultWagmiConfig({ chains, projectId, metadata });
 
@@ -46,6 +58,6 @@ createWeb3Modal({
     '--w3m-accent': '#FFA000',
     '--w3m-border-radius-master': '12px'
   },
-  // Default to BSC Mainnet for production
-  defaultChain: bscChain
+  // Default to BSC Testnet for development
+  defaultChain: bscTestnetChain
 });

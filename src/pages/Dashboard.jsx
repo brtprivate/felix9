@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { useWallet } from '../context/WalletContext';
 import { useChainId, useSwitchChain } from 'wagmi';
-import { MAINNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
+import { BSC_TESTNET_CHAIN_ID, dwcContractInteractions } from '../services/contractService';
 import { waitForTransactionReceipt } from '@wagmi/core';
 import { config } from '../config/web3modal';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -43,11 +43,11 @@ const Dashboard = () => {
       return;
     }
 
-    if (chainId !== MAINNET_CHAIN_ID) {
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: MAINNET_CHAIN_ID });
+        await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Mainnet.');
+        setError('Please switch to BSC Testnet.');
         return;
       }
     }
@@ -62,7 +62,7 @@ const Dashboard = () => {
 
       await waitForTransactionReceipt(config, { 
         hash: registerTx, 
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
         confirmations: 2 
       });
 
@@ -93,11 +93,11 @@ const Dashboard = () => {
       return;
     }
 
-    if (chainId !== MAINNET_CHAIN_ID) {
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: MAINNET_CHAIN_ID });
+        await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Mainnet.');
+        setError('Please switch to BSC Testnet.');
         return;
       }
     }
@@ -126,7 +126,7 @@ const Dashboard = () => {
       setSuccess('Transaction submitted! Waiting for confirmation...');
       await waitForTransactionReceipt(config, { 
         hash: txHash, 
-        chainId: MAINNET_CHAIN_ID,
+        chainId: BSC_TESTNET_CHAIN_ID,
         confirmations: 2 
       });
 
@@ -157,7 +157,7 @@ const Dashboard = () => {
   // ============================
   if (!wallet.isConnected) {
     return (
-      <Container maxWidth="xl" sx={{ py: 2, background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)', minHeight: '100vh' }}>
+      <Container maxWidth="xl" sx={{ py: 2, background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)', minHeight: '100vh' }}>
         <Alert severity="warning">Please connect your wallet to view the dashboard.</Alert>
       </Container>
     );
@@ -167,7 +167,7 @@ const Dashboard = () => {
     return (
       <Container
         maxWidth="xl"
-        sx={{ py: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)' }}
+        sx={{ py: 2, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)' }}
       >
         <CircularProgress />
       </Container>
@@ -186,22 +186,57 @@ const Dashboard = () => {
               label="Referral Address (optional)"
               value={referralCode}
               onChange={(e) => setReferralCode(e.target.value)}
-              sx={{ minWidth: 200 }}
+              sx={{ 
+                minWidth: 200,
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#ffffff',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#ffffff',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#ffffff',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#ffffff',
+                },
+                '& .MuiOutlinedInput-input': {
+                  color: '#ffffff',
+                }
+              }}
             />
             <Button
-              color="inherit"
               size="small"
               startIcon={<PersonAddIcon />}
               onClick={handleRegister}
               disabled={isLoading}
+              sx={{ 
+                color: '#ffffff',
+                borderColor: '#ffffff',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: '#ffffff'
+                }
+              }}
+              variant="outlined"
             >
               Register
             </Button>
             <Button
-              color="inherit"
               size="small"
               onClick={() => setShowReferralInput(false)}
               disabled={isLoading}
+              sx={{ 
+                color: '#ffffff',
+                borderColor: '#ffffff',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderColor: '#ffffff'
+                }
+              }}
+              variant="outlined"
             >
               Cancel
             </Button>
@@ -216,11 +251,19 @@ const Dashboard = () => {
         sx={{ mb: 2 }}
         action={
           <Button
-            color="inherit"
             size="small"
             startIcon={<PersonAddIcon />}
             onClick={() => setShowReferralInput(true)}
             disabled={isLoading}
+            sx={{ 
+              color: '#ffffff',
+              borderColor: '#ffffff',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderColor: '#ffffff'
+              }
+            }}
+            variant="outlined"
           >
             Register Now
           </Button>
@@ -232,7 +275,7 @@ const Dashboard = () => {
   ) : null;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 2, background: 'linear-gradient(135deg, #f0f4ff 0%, #d9e4ff 100%)', minHeight: '100vh' }}>
+    <Container maxWidth="xl" sx={{ py: 2, background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)', minHeight: '100vh' }}>
       {registrationAlert}
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
@@ -247,10 +290,10 @@ const Dashboard = () => {
 
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Box>
-          <Typography variant="h4" gutterBottom sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+          <Typography variant="h4" gutterBottom sx={{ color: '#ffffff', fontWeight: 'bold' }}>
             Dashboard
           </Typography>
-          <Typography variant="body1" color="text.secondary">
+          <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
             Monitor your team performance and manage your package investments
           </Typography>
         </Box>
@@ -259,6 +302,14 @@ const Dashboard = () => {
           startIcon={<RefreshIcon />}
           onClick={fetchMlmData}
           disabled={isLoading}
+          sx={{ 
+            borderColor: '#ffffff',
+            color: '#ffffff',
+            '&:hover': {
+              borderColor: '#ffffff',
+              backgroundColor: 'rgba(255, 255, 255, 0.1)'
+            }
+          }}
         >
           Refresh
         </Button>

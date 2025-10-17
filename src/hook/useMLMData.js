@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { formatUnits } from "viem";
 import { dwcContractInteractions } from "../services/contractService";
-import { MAINNET_CHAIN_ID } from "../services/contractService";
+import { BSC_TESTNET_CHAIN_ID } from "../services/contractService";
 
 const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
   const [mlmData, setMlmData] = useState({
@@ -115,11 +115,11 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
       return;
     }
 
-    if (chainId !== MAINNET_CHAIN_ID) {
+    if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        await switchChain({ chainId: MAINNET_CHAIN_ID });
+        await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError("Please switch to BSC Mainnet.");
+        setError("Please switch to BSC Testnet.");
         return;
       }
     }
@@ -151,7 +151,7 @@ const useMLMData = (wallet, chainId, switchChain, setError, setIsLoading) => {
 
       const [usdtBalanceRaw, directIncome, contractPercent, maxRoi, contractBalanceRaw, totalUsersRaw] =
         await Promise.all([
-          dwcContractInteractions.getUSDTBalance(wallet.account), // Changed to getUSDTBalance
+          dwcContractInteractions.getUSDCBalance(wallet.account), // Changed to getUSDTBalance
           dwcContractInteractions.getDirectIncome(),
           dwcContractInteractions.getContractPercent(),
           dwcContractInteractions.getMaxRoi(),
