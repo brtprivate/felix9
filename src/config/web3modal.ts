@@ -59,6 +59,6 @@ createWeb3Modal({
     '--w3m-accent': '#FFA000',
     '--w3m-border-radius-master': '12px'
   },
-  // Default to BSC Testnet for development
-  defaultChain: bscTestnetChain
+  // Default to BSC Mainnet
+  defaultChain: bscChain
 });

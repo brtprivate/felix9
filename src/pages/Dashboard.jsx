@@ -51,7 +51,7 @@ const Dashboard = () => {
       try {
         await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Testnet.');
+        setError('Please switch to BSC Mainnet.');
         return;
       }
     }
@@ -99,7 +99,7 @@ const Dashboard = () => {
       try {
         await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
       } catch (error) {
-        setError('Please switch to BSC Testnet.');
+        setError('Please switch to BSC Mainnet.');
         return;
       }
     }

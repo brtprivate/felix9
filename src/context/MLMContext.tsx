@@ -66,7 +66,7 @@ export const MLMProvider: React.FC<MLMProviderProps> = ({ children }) => {
 
   const handleRegisterMLM = async (referrerAddress?: string): Promise<boolean> => {
     if (!address || !isCorrectNetwork) {
-      throw new Error('Wallet not connected or wrong network. Please connect your wallet and switch to BSC Testnet.');
+      throw new Error('Wallet not connected or wrong network. Please connect your wallet and switch to BSC Mainnet.');
     }
 
     const refAddress = referrerAddress || '0xA841371376190547E54c8Fa72B0e684191E756c7';

@@ -33,12 +33,12 @@ const PackagePurchase = ({ notRegistered, packages, packageDetails, isLoading, s
     }
     if (chainId !== BSC_TESTNET_CHAIN_ID) {
       try {
-        console.log('Switching chain to BSC Testnet...');
+        console.log('Switching chain to BSC Mainnet...');
         await switchChain({ chainId: BSC_TESTNET_CHAIN_ID });
         console.log('Chain switched successfully.');
       } catch (error) {
         console.error('Error switching chain:', error);
-        setError('Please switch to BSC Testnet.');
+        setError('Please switch to BSC Mainnet.');
         return;
       }
     }
