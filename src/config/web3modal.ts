@@ -34,6 +34,7 @@ const bscChain = {
   },
 };
 
+
 const chains = [bscTestnetChain, bscChain] as const;
 
 export const config = defaultWagmiConfig({ chains, projectId, metadata });
