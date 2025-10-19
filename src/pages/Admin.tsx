@@ -452,7 +452,7 @@ const Admin: React.FC = () => {
               </Box>
             </Box>
             
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Chip
                 icon={systemHealth === 'healthy' ? <CheckIcon /> : systemHealth === 'warning' ? <WarningIcon /> : <ErrorIcon />}
                 label={`System ${systemHealth}`}
@@ -471,7 +471,7 @@ const Admin: React.FC = () => {
                 }
                 label=""
               />
-            </Box>
+            </Box> */}
           </Box>
 
           {alert && (
