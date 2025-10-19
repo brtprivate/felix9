@@ -19,8 +19,8 @@ export { USDC_ABI };
 // https://testnet.bscscan.com/address/0x8e90aa73cd1dda82dfb62807ef8bfc2112d90def#writeContract
 // Contract configuration - BSC Testnet
 export const DWC_CONTRACT_ADDRESS =
-  "0x8e90aa73cd1dda82dfb62807ef8bfc2112d90def" as Address;
-export const BSC_TESTNET_CHAIN_ID = 97;
+  "0x222Ace7B7B91D777A468B37aA9793341f4fa0a4e" as Address;
+export const BSC_TESTNET_CHAIN_ID = 56;
 export const MAINNET_CHAIN_ID = BSC_TESTNET_CHAIN_ID; // For backward compatibility
 export const TESTNET_CHAIN_ID = BSC_TESTNET_CHAIN_ID;
 export const getFunctionName = () => {
@@ -204,7 +204,7 @@ export const DWC_ABI = [
       { internalType: "address", name: "_user", type: "address" },
       { internalType: "uint256", name: "_index", type: "uint256" },
     ],
-    name: "calculateClaimAble",
+    name: "calculateClaimAbles",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
@@ -240,6 +240,13 @@ export const DWC_ABI = [
     name: "distributeRewardsToAll",
     outputs: [],
     stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "distributor",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
     type: "function",
   },
   {
@@ -350,6 +357,15 @@ export const DWC_ABI = [
     name: "uniqueUsers",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_distributor", type: "address" },
+    ],
+    name: "updateDistributor",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function",
   },
   {
@@ -1304,7 +1320,6 @@ export const dwcContractInteractions: DWCContractInteractions = {
     }
   },
 
-  
   async getUserRecord(user: Address): Promise<UserRecord> {
     try {
       const result = (await readContract(config, {
@@ -1544,7 +1559,7 @@ export const dwcContractInteractions: DWCContractInteractions = {
       const claimable = (await readContract(config, {
         abi: DWC_ABI,
         address: DWC_CONTRACT_ADDRESS,
-        functionName: "calculateClaimAble",
+        functionName: "calculateClaimAbles",
         args: [user, index],
         chainId: BSC_TESTNET_CHAIN_ID,
       })) as bigint;

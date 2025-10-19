@@ -1,30 +1,27 @@
 /**
  * USDT (Tether USD) BEP-20 Token Contract Interface
- * BSC Testnet Contract Address: 0x4aE58BfC16b20bD67755FFD5560e85779D962415
- * Token Tracker: BEP-20: USDT (Tether USD) - Testnet
+ * BSC Mainnet Contract Address: 0x55d398326f99059fF775485246999027B3197955
+ * Token Tracker: BEP-20: USDT (Tether USD)
  * SPDX-License-Identifier: MIT
  */
 
 import { readContract, writeContract } from "@wagmi/core";
 import { config } from "../config/web3modal";
 import type { Address } from "viem";
-import { bscTestnet } from "wagmi/chains";
-import { getChainId, getFunctionName, BSC_TESTNET_CHAIN_ID } from "./contractService";
+import { bsc } from "wagmi/chains";
 
-// https://testnet.bscscan.com/address/0x4aE58BfC16b20bD67755FFD5560e85779D962415#writeContract
-// USDT Contract configuration - BSC Testnet
-export const TESTNET_CONTRACT_ADDRESS_USDC =
-  "0x4aE58BfC16b20bD67755FFD5560e85779D962415" as Address;
-// BSC Mainnet USDT address for reference
-// export const USDT_CONTRACT_ADDRESS =
-//   "0x55d398326f99059fF775485246999027B3197955" as Address;
+// https://bscscan.com/address/0x55d398326f99059fF775485246999027B3197955#writeContract
+// USDT Contract configuration - BSC Mainnet
+export const USDT_CONTRACT_ADDRESS =
+  "0x55d398326f99059fF775485246999027B3197955" as Address;
+export const BSC_MAINNET_CHAIN_ID = 56;
 
 // Keep USDC exports for backward compatibility
-export const USDC_CONTRACT_ADDRESS = TESTNET_CONTRACT_ADDRESS_USDC;
-export const BSC_MAINNET_CHAIN_ID = 56; // Actual BSC Mainnet chain ID
+export const USDC_CONTRACT_ADDRESS = USDT_CONTRACT_ADDRESS;
+export const BSC_TESTNET_CHAIN_ID = BSC_MAINNET_CHAIN_ID;
 
 // USDC Contract ABI
-const usdcAbi = [
+export const USDC_ABI = [
   {
     inputs: [
       {
@@ -346,329 +343,6 @@ const usdcAbi = [
     type: "function",
   },
 ] as const;
-const usdtAbi = [
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_recipient",
-        type: "address",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "constructor",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "spender",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "allowance",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "needed",
-        type: "uint256",
-      },
-    ],
-    name: "ERC20InsufficientAllowance",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "sender",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "balance",
-        type: "uint256",
-      },
-      {
-        internalType: "uint256",
-        name: "needed",
-        type: "uint256",
-      },
-    ],
-    name: "ERC20InsufficientBalance",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "approver",
-        type: "address",
-      },
-    ],
-    name: "ERC20InvalidApprover",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "receiver",
-        type: "address",
-      },
-    ],
-    name: "ERC20InvalidReceiver",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "sender",
-        type: "address",
-      },
-    ],
-    name: "ERC20InvalidSender",
-    type: "error",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "spender",
-        type: "address",
-      },
-    ],
-    name: "ERC20InvalidSpender",
-    type: "error",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "owner",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "spender",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "value",
-        type: "uint256",
-      },
-    ],
-    name: "Approval",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
-        indexed: true,
-        internalType: "address",
-        name: "from",
-        type: "address",
-      },
-      {
-        indexed: true,
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        indexed: false,
-        internalType: "uint256",
-        name: "value",
-        type: "uint256",
-      },
-    ],
-    name: "Transfer",
-    type: "event",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "owner",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "spender",
-        type: "address",
-      },
-    ],
-    name: "allowance",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "spender",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "value",
-        type: "uint256",
-      },
-    ],
-    name: "approve",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "account",
-        type: "address",
-      },
-    ],
-    name: "balanceOf",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "decimals",
-    outputs: [
-      {
-        internalType: "uint8",
-        name: "",
-        type: "uint8",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-
-  {
-    inputs: [],
-    name: "name",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "symbol",
-    outputs: [
-      {
-        internalType: "string",
-        name: "",
-        type: "string",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [],
-    name: "totalSupply",
-    outputs: [
-      {
-        internalType: "uint256",
-        name: "",
-        type: "uint256",
-      },
-    ],
-    stateMutability: "view",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "value",
-        type: "uint256",
-      },
-    ],
-    name: "transfer",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      {
-        internalType: "address",
-        name: "from",
-        type: "address",
-      },
-      {
-        internalType: "address",
-        name: "to",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "value",
-        type: "uint256",
-      },
-    ],
-    name: "transferFrom",
-    outputs: [
-      {
-        internalType: "bool",
-        name: "",
-        type: "bool",
-      },
-    ],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-] as const;
-export const USDC_ABI = usdcAbi;
 
 // USDC Contract interaction functions
 export const usdcContractInteractions = {
@@ -692,7 +366,7 @@ export const usdcContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "approve",
         args: [spender, amount],
-        chain: getFunctionName(),
+        chain: bsc,
         account: account,
       });
 
@@ -718,7 +392,7 @@ export const usdcContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "balanceOf",
         args: [account],
-        chainId: BSC_TESTNET_CHAIN_ID,
+        chainId: BSC_MAINNET_CHAIN_ID,
       })) as bigint;
     } catch (error: any) {
       console.error(`Error fetching USDC balance: ${error.message || error}`);
@@ -748,7 +422,7 @@ export const usdcContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "transfer",
         args: [to, amount],
-        chain: getFunctionName(),
+        chain: bsc,
         account: account,
       });
 
@@ -784,7 +458,7 @@ export const usdcContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "transferFrom",
         args: [from, to, amount],
-        chain: getFunctionName(),
+        chain: bsc,
         account: account,
       });
 
@@ -811,7 +485,7 @@ export const usdcContractInteractions = {
         address: USDC_CONTRACT_ADDRESS,
         functionName: "allowance",
         args: [owner, spender],
-        chainId: BSC_TESTNET_CHAIN_ID,
+        chainId: BSC_MAINNET_CHAIN_ID,
       })) as bigint;
     } catch (error: any) {
       console.error(`Error fetching allowance: ${error.message || error}`);
@@ -831,7 +505,7 @@ export const usdcContractInteractions = {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "totalSupply",
-        chainId: BSC_TESTNET_CHAIN_ID,
+        chainId: BSC_MAINNET_CHAIN_ID,
       })) as bigint;
     } catch (error: any) {
       console.error(`Error fetching total supply: ${error.message || error}`);
@@ -851,7 +525,7 @@ export const usdcContractInteractions = {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "name",
-        chainId: BSC_TESTNET_CHAIN_ID,
+        chainId: BSC_MAINNET_CHAIN_ID,
       })) as string;
     } catch (error: any) {
       console.error(`Error fetching token name: ${error.message || error}`);
@@ -871,7 +545,7 @@ export const usdcContractInteractions = {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "symbol",
-        chainId: BSC_TESTNET_CHAIN_ID,
+        chainId: BSC_MAINNET_CHAIN_ID,
       })) as string;
     } catch (error: any) {
       console.error(`Error fetching token symbol: ${error.message || error}`);
@@ -891,7 +565,7 @@ export const usdcContractInteractions = {
         abi: USDC_ABI,
         address: USDC_CONTRACT_ADDRESS,
         functionName: "decimals",
-        chainId: BSC_TESTNET_CHAIN_ID,
+        chainId: BSC_MAINNET_CHAIN_ID,
       })) as number;
     } catch (error: any) {
       console.error(`Error fetching decimals: ${error.message || error}`);

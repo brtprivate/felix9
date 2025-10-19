@@ -30,7 +30,6 @@ const Dashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [referralCode, setReferralCode] = useState('');
-  const [showReferralInput, setShowReferralInput] = useState(false);
   const { mlmData, stakes, fetchMlmData, notRegistered } = useMLMData(wallet, chainId, switchChain, setError, setIsLoading);
   const { packageDetails, packages } = usePackageDetails();
 
@@ -40,6 +39,11 @@ const Dashboard = () => {
   const handleRegister = async () => {
     if (!wallet.isConnected || !wallet.account) {
       setError('Please connect your wallet to register.');
+      return;
+    }
+
+    if (!referralCode.trim()) {
+      setError('Referral address is required. Please enter a valid referral address.');
       return;
     }
 
@@ -57,8 +61,7 @@ const Dashboard = () => {
       setError('');
       setSuccess('');
 
-      const refCode = referralCode || '0xA841371376190547E54c8Fa72B0e684191E756c7'; // fallback referrer
-      const registerTx = await dwcContractInteractions.registration(refCode, wallet.account);
+      const registerTx = await dwcContractInteractions.registration(referralCode.trim(), wallet.account);
 
       await waitForTransactionReceipt(config, { 
         hash: registerTx, 
@@ -68,7 +71,6 @@ const Dashboard = () => {
 
       setSuccess(`Registration successful! Transaction: ${registerTx}`);
       setReferralCode('');
-      setShowReferralInput(false);
       setTimeout(() => fetchMlmData(), 1000);
     } catch (error) {
       console.error('Error registering user:', error);
@@ -175,103 +177,99 @@ const Dashboard = () => {
   }
 
   const registrationAlert = notRegistered ? (
-    showReferralInput ? (
-      <Alert
-        severity="info"
-        sx={{ mb: 2 }}
-        action={
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-            <TextField
-              size="small"
-              label="Referral Address (optional)"
-              value={referralCode}
-              onChange={(e) => setReferralCode(e.target.value)}
-              sx={{ 
-                minWidth: 200,
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: '#ffffff',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#ffffff',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#ffffff',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#ffffff',
-                },
-                '& .MuiOutlinedInput-input': {
-                  color: '#ffffff',
-                }
-              }}
-            />
-            <Button
-              size="small"
-              startIcon={<PersonAddIcon />}
-              onClick={handleRegister}
-              disabled={isLoading}
-              sx={{ 
-                color: '#ffffff',
-                borderColor: '#ffffff',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderColor: '#ffffff'
-                }
-              }}
-              variant="outlined"
-            >
-              Register
-            </Button>
-            <Button
-              size="small"
-              onClick={() => setShowReferralInput(false)}
-              disabled={isLoading}
-              sx={{ 
-                color: '#ffffff',
-                borderColor: '#ffffff',
-                '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  borderColor: '#ffffff'
-                }
-              }}
-              variant="outlined"
-            >
-              Cancel
-            </Button>
-          </Box>
+    <Alert
+      severity="warning"
+      sx={{ 
+        mb: 2,
+        backgroundColor: '#2d1b00',
+        border: '2px solid #ff9800',
+        '& .MuiAlert-icon': {
+          color: '#ff9800',
+        },
+        '& .MuiAlert-message': {
+          color: '#ffffff',
+          fontWeight: 'bold',
         }
-      >
-        Enter a referral address if you have one, or leave blank to use the default.
-      </Alert>
-    ) : (
-      <Alert
-        severity="info"
-        sx={{ mb: 2 }}
-        action={
+      }}
+      action={
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          <TextField
+            size="small"
+            label="Referral Address *"
+            value={referralCode}
+            onChange={(e) => setReferralCode(e.target.value)}
+            placeholder="Enter referral address (required)"
+            required
+            error={!referralCode.trim()}
+            helperText={!referralCode.trim() ? "Referral address is required" : ""}
+            sx={{ 
+              minWidth: 280,
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#1a1a1a',
+                '& fieldset': {
+                  borderColor: !referralCode.trim() ? '#f44336' : '#ff9800',
+                  borderWidth: '2px',
+                },
+                '&:hover fieldset': {
+                  borderColor: !referralCode.trim() ? '#f44336' : '#ffb74d',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: !referralCode.trim() ? '#f44336' : '#ff9800',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: !referralCode.trim() ? '#f44336' : '#ff9800',
+                fontWeight: 'bold',
+              },
+              '& .MuiOutlinedInput-input': {
+                color: '#ffffff',
+                fontWeight: '500',
+              },
+              '& .MuiInputBase-input::placeholder': {
+                color: '#ffb74d',
+                opacity: 1,
+                fontWeight: '500',
+              },
+              '& .MuiFormHelperText-root': {
+                color: '#f44336',
+                fontWeight: 'bold',
+              }
+            }}
+          />
           <Button
             size="small"
             startIcon={<PersonAddIcon />}
-            onClick={() => setShowReferralInput(true)}
-            disabled={isLoading}
+            onClick={handleRegister}
+            disabled={isLoading || !referralCode.trim()}
             sx={{ 
               color: '#ffffff',
-              borderColor: '#ffffff',
+              backgroundColor: !referralCode.trim() ? '#666666' : '#ff9800',
+              borderColor: !referralCode.trim() ? '#666666' : '#ff9800',
+              fontWeight: 'bold',
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                borderColor: '#ffffff'
+                backgroundColor: !referralCode.trim() ? '#666666' : '#ffb74d',
+                borderColor: !referralCode.trim() ? '#666666' : '#ffb74d'
+              },
+              '&:disabled': {
+                backgroundColor: '#666666',
+                borderColor: '#666666',
+                color: '#999999'
               }
             }}
-            variant="outlined"
+            variant="contained"
           >
-            Register Now
+            Register
           </Button>
-        }
-      >
-        You need to register to participate in the system. Click "Register Now" to enter a referral address (optional).
-      </Alert>
-    )
+        </Box>
+      }
+    >
+      <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#ffffff' }}>
+        Registration Required - Referral Address is Mandatory
+      </Typography>
+      <Typography variant="body2" sx={{ color: '#ffb74d', mt: 1 }}>
+        You must enter a valid referral address to register. This field cannot be left blank.
+      </Typography>
+    </Alert>
   ) : null;
 
   return (
