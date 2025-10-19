@@ -6,8 +6,8 @@ const projectId = 'b0cebcda95846f0aabc833a9f05dca99';
 const metadata = {
   name: 'felix9',
   description: 'Platform',
-  url: 'https://felix9.io/',
-  icons: ['https://felix9.io/favicon.ico']
+  url: 'https://app.felix9.io/',
+  icons: ['https://app.felix9.io/favicon.ico']
 };
 
 const bscTestnetChain = {
