@@ -189,21 +189,32 @@ const Dashboard = () => {
         '& .MuiAlert-message': {
           color: '#ffffff',
           fontWeight: 'bold',
+        },
+        '& .MuiAlert-action': {
+          padding: { xs: '8px 0 0 0', sm: '8px 0 0 16px' },
+          alignItems: { xs: 'stretch', sm: 'center' },
         }
       }}
       action={
-        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 1, 
+          alignItems: 'center',
+          flexDirection: { xs: 'column', sm: 'row' },
+          width: '100%'
+        }}>
           <TextField
             size="small"
             label="Referral Address *"
             value={referralCode}
             onChange={(e) => setReferralCode(e.target.value)}
-            placeholder="Enter referral address (required)"
+            placeholder="Enter referral address"
             required
             error={!referralCode.trim()}
-            helperText={!referralCode.trim() ? "Referral address is required" : ""}
+            helperText={!referralCode.trim() ? "Required field" : ""}
             sx={{ 
-              minWidth: 280,
+              width: { xs: '100%', sm: '280px' },
+              minWidth: { xs: 'auto', sm: '280px' },
               '& .MuiOutlinedInput-root': {
                 backgroundColor: '#1a1a1a',
                 '& fieldset': {
@@ -220,19 +231,23 @@ const Dashboard = () => {
               '& .MuiInputLabel-root': {
                 color: !referralCode.trim() ? '#f44336' : '#ff9800',
                 fontWeight: 'bold',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
               },
               '& .MuiOutlinedInput-input': {
                 color: '#ffffff',
                 fontWeight: '500',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
               },
               '& .MuiInputBase-input::placeholder': {
                 color: '#ffb74d',
                 opacity: 1,
                 fontWeight: '500',
+                fontSize: { xs: '0.875rem', sm: '1rem' },
               },
               '& .MuiFormHelperText-root': {
                 color: '#f44336',
                 fontWeight: 'bold',
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
               }
             }}
           />
@@ -246,6 +261,9 @@ const Dashboard = () => {
               backgroundColor: !referralCode.trim() ? '#666666' : '#ff9800',
               borderColor: !referralCode.trim() ? '#666666' : '#ff9800',
               fontWeight: 'bold',
+              width: { xs: '100%', sm: 'auto' },
+              minWidth: { xs: 'auto', sm: '120px' },
+              fontSize: { xs: '0.875rem', sm: '1rem' },
               '&:hover': {
                 backgroundColor: !referralCode.trim() ? '#666666' : '#ffb74d',
                 borderColor: !referralCode.trim() ? '#666666' : '#ffb74d'
@@ -263,11 +281,19 @@ const Dashboard = () => {
         </Box>
       }
     >
-      <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#ffffff' }}>
-        Registration Required - Referral Address is Mandatory
+      <Typography variant="body1" sx={{ 
+        fontWeight: 'bold', 
+        color: '#ffffff',
+        fontSize: { xs: '0.875rem', sm: '1rem' }
+      }}>
+        Registration Required
       </Typography>
-      <Typography variant="body2" sx={{ color: '#ffb74d', mt: 1 }}>
-        You must enter a valid referral address to register. This field cannot be left blank.
+      <Typography variant="body2" sx={{ 
+        color: '#ffb74d', 
+        mt: 1,
+        fontSize: { xs: '0.75rem', sm: '0.875rem' }
+      }}>
+        Enter referral address to continue
       </Typography>
     </Alert>
   ) : null;
@@ -292,7 +318,7 @@ const Dashboard = () => {
             Dashboard
           </Typography>
           <Typography variant="body1" sx={{ color: '#b0b0b0' }}>
-            Monitor your team performance and manage your package investments
+            Manage your investments and team performance
           </Typography>
         </Box>
         <Button

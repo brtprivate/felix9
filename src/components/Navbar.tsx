@@ -473,6 +473,12 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                 component={RouterLink}
                 to="/referral-details"
               />
+              <BottomNavigationAction
+                label="Disconnect"
+                value="/disconnect"
+                icon={<LogoutIcon />}
+                onClick={currentWallet.disconnectWallet}
+              />
             </BottomNavigation>
           </Box>
         </Paper>
@@ -494,7 +500,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
           <BottomNavigation
             value={location.pathname}
             sx={{
-              bgcolor: '#6200ea',
+              bgcolor: '#1a1a1a',
               '& .MuiBottomNavigationAction-root': {
                 color: 'rgba(255, 255, 255, 0.7)',
                 '&.Mui-selected': {
@@ -510,6 +516,31 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
               component={RouterLink}
               to="/"
             />
+            {currentWallet.isConnected && (
+              <BottomNavigationAction
+                label="Dashboard"
+                value="/dashboard"
+                icon={<DashboardIcon />}
+                component={RouterLink}
+                to="/dashboard"
+              />
+            )}
+            {currentWallet.isConnected && (
+              <BottomNavigationAction
+                label="Disconnect"
+                value="/disconnect"
+                icon={<LogoutIcon />}
+                onClick={currentWallet.disconnectWallet}
+              />
+            )}
+            {!currentWallet.isConnected && (
+              <BottomNavigationAction
+                label="Connect"
+                value="/connect"
+                icon={<AccountBalanceWalletIcon />}
+                onClick={() => open()}
+              />
+            )}
 
           </BottomNavigation>
         </Paper>
@@ -531,7 +562,7 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
           <BottomNavigation
             value={location.pathname}
             sx={{
-              bgcolor: isMLMSection ? '#FFA000' : '#6200ea',
+              bgcolor: isMLMSection ? '#FFA000' : '#1a1a1a',
               '& .MuiBottomNavigationAction-root': {
                 color: 'rgba(255, 255, 255, 0.7)',
                 '&.Mui-selected': {
@@ -564,6 +595,14 @@ const Navbar: React.FC<NavbarProps> = ({ selectedSection, onSectionChange }) => 
                 value="/refresh"
                 icon={<span style={{ fontSize: '18px' }}>↻</span>}
                 onClick={handleManualRefresh}
+              />
+            )}
+            {currentWallet.isConnected && (
+              <BottomNavigationAction
+                label="Disconnect"
+                value="/disconnect"
+                icon={<LogoutIcon />}
+                onClick={currentWallet.disconnectWallet}
               />
             )}
             {!currentWallet.isConnected && (
